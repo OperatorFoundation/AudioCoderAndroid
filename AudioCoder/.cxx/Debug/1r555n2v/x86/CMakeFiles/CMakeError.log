@@ -1,0 +1,261 @@
+Determining if the include file altivec.h exists failed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_4b114 && [1/2] Building C object CMakeFiles/cmTC_4b114.dir/CheckIncludeFile.c.o
+FAILED: CMakeFiles/cmTC_4b114.dir/CheckIncludeFile.c.o 
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=i686-none-linux-android26 --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot   -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fPIE -MD -MT CMakeFiles/cmTC_4b114.dir/CheckIncludeFile.c.o -MF CMakeFiles/cmTC_4b114.dir/CheckIncludeFile.c.o.d -o CMakeFiles/cmTC_4b114.dir/CheckIncludeFile.c.o -c /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+In file included from /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:13:2: error: "AltiVec support not enabled"
+   13 | #error "AltiVec support not enabled"
+      |  ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:50:19: error: unknown type name 'vector'
+   50 | static __inline__ vector signed char __ATTRS_o_ai vec_perm(
+      |                   ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:51:5: error: unknown type name 'vector'
+   51 |     vector signed char __a, vector signed char __b, vector unsigned char __c);
+      |     ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:51:29: error: unknown type name 'vector'
+   51 |     vector signed char __a, vector signed char __b, vector unsigned char __c);
+      |                             ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:51:53: error: unknown type name 'vector'
+   51 |     vector signed char __a, vector signed char __b, vector unsigned char __c);
+      |                                                     ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:53:19: error: unknown type name 'vector'
+   53 | static __inline__ vector unsigned char __ATTRS_o_ai
+      |                   ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:54:10: error: unknown type name 'vector'
+   54 | vec_perm(vector unsigned char __a, vector unsigned char __b,
+      |          ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:54:36: error: unknown type name 'vector'
+   54 | vec_perm(vector unsigned char __a, vector unsigned char __b,
+      |                                    ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:55:10: error: unknown type name 'vector'
+   55 |          vector unsigned char __c);
+      |          ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:57:19: error: unknown type name 'vector'
+   57 | static __inline__ vector bool char __ATTRS_o_ai
+      |                   ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:57:8: error: 'inline' can only appear on functions
+   57 | static __inline__ vector bool char __ATTRS_o_ai
+      |        ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:57:30: error: expected ';' after top level declarator
+   57 | static __inline__ vector bool char __ATTRS_o_ai
+      |                              ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:58:10: error: unknown type name 'vector'
+   58 | vec_perm(vector bool char __a, vector bool char __b, vector unsigned char __c);
+      |          ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:58:22: error: expected ')'
+   58 | vec_perm(vector bool char __a, vector bool char __b, vector unsigned char __c);
+      |                      ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:58:9: note: to match this '('
+   58 | vec_perm(vector bool char __a, vector bool char __b, vector unsigned char __c);
+      |         ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:60:19: error: unknown type name 'vector'
+   60 | static __inline__ vector short __ATTRS_o_ai vec_perm(vector signed short __a,
+      |                   ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:60:54: error: unknown type name 'vector'
+   60 | static __inline__ vector short __ATTRS_o_ai vec_perm(vector signed short __a,
+      |                                                      ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:61:54: error: unknown type name 'vector'
+   61 |                                                      vector signed short __b,
+      |                                                      ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:62:54: error: unknown type name 'vector'
+   62 |                                                      vector unsigned char __c);
+      |                                                      ^
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include/altivec.h:64:19: error: unknown type name 'vector'
+   64 | static __inline__ vector unsigned short __ATTRS_o_ai
+      |                   ^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+20 errors generated.
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the include file c_asm.h exists failed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_9c09f && [1/2] Building C object CMakeFiles/cmTC_9c09f.dir/CheckIncludeFile.c.o
+FAILED: CMakeFiles/cmTC_9c09f.dir/CheckIncludeFile.c.o 
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=i686-none-linux-android26 --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot   -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fPIE -MD -MT CMakeFiles/cmTC_9c09f.dir/CheckIncludeFile.c.o -MF CMakeFiles/cmTC_9c09f.dir/CheckIncludeFile.c.o.d -o CMakeFiles/cmTC_9c09f.dir/CheckIncludeFile.c.o -c /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: 'c_asm.h' file not found
+    1 | #include <c_asm.h>
+      |          ^~~~~~~~~
+1 error generated.
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the include file intrinsics.h exists failed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_bb2a1 && [1/2] Building C object CMakeFiles/cmTC_bb2a1.dir/CheckIncludeFile.c.o
+FAILED: CMakeFiles/cmTC_bb2a1.dir/CheckIncludeFile.c.o 
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=i686-none-linux-android26 --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot   -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fPIE -MD -MT CMakeFiles/cmTC_bb2a1.dir/CheckIncludeFile.c.o -MF CMakeFiles/cmTC_bb2a1.dir/CheckIncludeFile.c.o.d -o CMakeFiles/cmTC_bb2a1.dir/CheckIncludeFile.c.o -c /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: 'intrinsics.h' file not found
+    1 | #include <intrinsics.h>
+      |          ^~~~~~~~~~~~~~
+1 error generated.
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the include file libintl.h exists failed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_be9f7 && [1/2] Building C object CMakeFiles/cmTC_be9f7.dir/CheckIncludeFile.c.o
+FAILED: CMakeFiles/cmTC_be9f7.dir/CheckIncludeFile.c.o 
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=i686-none-linux-android26 --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot   -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fPIE -MD -MT CMakeFiles/cmTC_be9f7.dir/CheckIncludeFile.c.o -MF CMakeFiles/cmTC_be9f7.dir/CheckIncludeFile.c.o.d -o CMakeFiles/cmTC_be9f7.dir/CheckIncludeFile.c.o -c /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: 'libintl.h' file not found
+    1 | #include <libintl.h>
+      |          ^~~~~~~~~~~
+1 error generated.
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the include file mach/mach_time.h exists failed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_b852e && [1/2] Building C object CMakeFiles/cmTC_b852e.dir/CheckIncludeFile.c.o
+FAILED: CMakeFiles/cmTC_b852e.dir/CheckIncludeFile.c.o 
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=i686-none-linux-android26 --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot   -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fPIE -MD -MT CMakeFiles/cmTC_b852e.dir/CheckIncludeFile.c.o -MF CMakeFiles/cmTC_b852e.dir/CheckIncludeFile.c.o.d -o CMakeFiles/cmTC_b852e.dir/CheckIncludeFile.c.o -c /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: 'mach/mach_time.h' file not found
+    1 | #include <mach/mach_time.h>
+      |          ^~~~~~~~~~~~~~~~~~
+1 error generated.
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the include file sys/sysctl.h exists failed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_caf1b && [1/2] Building C object CMakeFiles/cmTC_caf1b.dir/CheckIncludeFile.c.o
+FAILED: CMakeFiles/cmTC_caf1b.dir/CheckIncludeFile.c.o 
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=i686-none-linux-android26 --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot   -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fPIE -MD -MT CMakeFiles/cmTC_caf1b.dir/CheckIncludeFile.c.o -MF CMakeFiles/cmTC_caf1b.dir/CheckIncludeFile.c.o.d -o CMakeFiles/cmTC_caf1b.dir/CheckIncludeFile.c.o -c /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: 'sys/sysctl.h' file not found
+    1 | #include <sys/sysctl.h>
+      |          ^~~~~~~~~~~~~~
+1 error generated.
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the include file uintptr.h exists failed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_85c4a && [1/2] Building C object CMakeFiles/cmTC_85c4a.dir/CheckIncludeFile.c.o
+FAILED: CMakeFiles/cmTC_85c4a.dir/CheckIncludeFile.c.o 
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=i686-none-linux-android26 --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot   -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fPIE -MD -MT CMakeFiles/cmTC_85c4a.dir/CheckIncludeFile.c.o -MF CMakeFiles/cmTC_85c4a.dir/CheckIncludeFile.c.o.d -o CMakeFiles/cmTC_85c4a.dir/CheckIncludeFile.c.o -c /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: 'uintptr.h' file not found
+    1 | #include <uintptr.h>
+      |          ^~~~~~~~~~~
+1 error generated.
+ninja: build stopped: subcommand failed.
+
+
+
+Determining if the prototype srand48 exists for HAVE_DECL_SRAND48 failed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_cc123 && [1/2] Building C object CMakeFiles/cmTC_cc123.dir/CheckPrototypeDefinition.c.o
+FAILED: CMakeFiles/cmTC_cc123.dir/CheckPrototypeDefinition.c.o 
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=i686-none-linux-android26 --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot   -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fPIE -MD -MT CMakeFiles/cmTC_cc123.dir/CheckPrototypeDefinition.c.o -MF CMakeFiles/cmTC_cc123.dir/CheckPrototypeDefinition.c.o.d -o CMakeFiles/cmTC_cc123.dir/CheckPrototypeDefinition.c.o -c /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckPrototypeDefinition.c
+/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckPrototypeDefinition.c:15:3: error: void function 'srand48' should not return a value [-Wreturn-type]
+   15 |   return 0;
+      |   ^      ~
+1 error generated.
+ninja: build stopped: subcommand failed.
+
+
+
+#include <stdlib.h>
+
+
+static void cmakeRequireSymbol(int dummy, ...) {
+  (void) dummy;
+}
+
+static void checkSymbol(void) {
+#ifndef srand48
+  cmakeRequireSymbol(0, &srand48);
+#endif
+}
+
+void srand48(long int seedval) {
+  return 0;
+}
+
+#ifdef __CLASSIC_C__
+int main() {
+  int ac;
+  char*av[];
+#else
+int main(int ac, char *av[]) {
+#endif
+  checkSymbol();
+  if (ac > 1000) {
+    return *av[0];
+  }
+  return 0;
+}
+
+
+Determining if the mach_absolute_time exist failed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_f6e73 && [1/2] Building C object CMakeFiles/cmTC_f6e73.dir/CheckSymbolExists.c.o
+FAILED: CMakeFiles/cmTC_f6e73.dir/CheckSymbolExists.c.o 
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=i686-none-linux-android26 --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot   -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fPIE -MD -MT CMakeFiles/cmTC_f6e73.dir/CheckSymbolExists.c.o -MF CMakeFiles/cmTC_f6e73.dir/CheckSymbolExists.c.o.d -o CMakeFiles/cmTC_f6e73.dir/CheckSymbolExists.c.o -c /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: 'mach/mach_time.h' file not found
+    2 | #include <mach/mach_time.h>
+      |          ^~~~~~~~~~~~~~~~~~
+1 error generated.
+ninja: build stopped: subcommand failed.
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <mach/mach_time.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef mach_absolute_time
+  return ((int*)(&mach_absolute_time))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the sysctl exist failed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_23078 && [1/2] Building C object CMakeFiles/cmTC_23078.dir/CheckSymbolExists.c.o
+FAILED: CMakeFiles/cmTC_23078.dir/CheckSymbolExists.c.o 
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=i686-none-linux-android26 --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot   -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fPIE -MD -MT CMakeFiles/cmTC_23078.dir/CheckSymbolExists.c.o -MF CMakeFiles/cmTC_23078.dir/CheckSymbolExists.c.o.d -o CMakeFiles/cmTC_23078.dir/CheckSymbolExists.c.o -c /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: error: use of undeclared identifier 'sysctl'; did you mean 'syscall'?
+    8 |   return ((int*)(&sysctl))[argc];
+      |                   ^~~~~~
+      |                   syscall
+/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/unistd.h:382:6: note: 'syscall' declared here
+  382 | long syscall(long __number, ...);
+      |      ^
+1 error generated.
+ninja: build stopped: subcommand failed.
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef sysctl
+  return ((int*)(&sysctl))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
