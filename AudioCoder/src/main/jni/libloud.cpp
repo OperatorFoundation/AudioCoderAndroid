@@ -15,7 +15,7 @@ int mains() {
 extern "C" JNIEXPORT jbyteArray
 
 JNICALL
-Java_aq_metallists_loudbang_cutil_CJarInterface_WSPREncodeToPCM
+Java_org_operatorfoundation_audiocoder_CJarInterface_WSPREncodeToPCM
         (JNIEnv *env, jclass cls, jstring j_calls, jstring j_loca, jint j_powr, jint j_offset,
          jboolean lsb_mod) {
     //JTEncode jit;
@@ -76,7 +76,7 @@ Java_aq_metallists_loudbang_cutil_CJarInterface_WSPREncodeToPCM
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_aq_metallists_loudbang_cutil_CJarInterface_radioCheck(JNIEnv *env, jclass clazz,
+Java_org_operatorfoundation_audiocoder_CJarInterface_radioCheck(JNIEnv *env, jclass clazz,
                                                            jint testvar) {
     return (jint) (testvar * 42);
 }
@@ -97,7 +97,7 @@ extern "C"
 JNIEXPORT jobjectArray
 
 JNICALL
-Java_aq_metallists_loudbang_cutil_CJarInterface_WSPRDecodeFromPcm(JNIEnv *env, jclass clazz,
+Java_org_operatorfoundation_audiocoder_CJarInterface_WSPRDecodeFromPcm(JNIEnv *env, jclass clazz,
                                                                   jbyteArray sound,
                                                                   jdouble dialfreq, jboolean lsb) {
     unsigned char *soundarr = as_unsigned_char_array(env, sound);
@@ -114,7 +114,7 @@ extern "C"
 JNIEXPORT jint
 
 JNICALL
-Java_aq_metallists_loudbang_cutil_CJarInterface_WSPRNhash(JNIEnv *env, jclass clazz, jstring call) {
+Java_org_operatorfoundation_audiocoder_CJarInterface_WSPRNhash(JNIEnv *env, jclass clazz, jstring call) {
     const char *callsign = env->GetStringUTFChars(call, 0);
     int ret = nhash(callsign, strlen(callsign), WSPRD_NHASH_CONSTANT);
     env->ReleaseStringUTFChars(call, callsign);
@@ -125,7 +125,7 @@ Java_aq_metallists_loudbang_cutil_CJarInterface_WSPRNhash(JNIEnv *env, jclass cl
 
 extern "C"
 JNIEXPORT jstring JNICALL
-Java_aq_metallists_loudbang_cutil_CJarInterface_WSPRLatLonToGSQ(JNIEnv *env, jclass clazz,
+Java_org_operatorfoundation_audiocoder_CJarInterface_WSPRLatLonToGSQ(JNIEnv *env, jclass clazz,
                                                                 jdouble lon, jdouble lat) {
     if (isnan(lat) || isnan(lon)) {
         env->ThrowNew(env->FindClass("java/lang/Exception"), "Latitude or longitude is NaN!");

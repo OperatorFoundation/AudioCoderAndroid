@@ -29,13 +29,13 @@ The CXX compiler identification is Clang, found in "/Users/mafalda/Documents/Ope
 Detecting C compiler ABI info compiled with the following output:
 Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/local/bin/ninja cmTC_87ca4 && [1/2] Building C object CMakeFiles/cmTC_87ca4.dir/CMakeCCompilerABI.c.o
+Run Build Command(s):/usr/local/bin/ninja cmTC_d2536 && [1/2] Building C object CMakeFiles/cmTC_d2536.dir/CMakeCCompilerABI.c.o
 Android (12027248, +pgo, -bolt, +lto, -mlgo, based on r522817) clang version 18.0.1 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262)
 Target: x86_64-none-linux-android26
 Thread model: posix
 InstalledDir: /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin
  (in-process)
- "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang" -cc1 -triple x86_64-none-linux-android26 -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -target-feature +sse4.2 -target-feature +popcnt -target-feature +cx16 -tune-cpu generic -debug-info-kind=constructor -dwarf-version=4 -debugger-tuning=gdb -fdebug-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -v -ffunction-sections -fdata-sections -fcoverage-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -resource-dir /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18 -dependency-file CMakeFiles/cmTC_87ca4.dir/CMakeCCompilerABI.c.o.d -MT CMakeFiles/cmTC_87ca4.dir/CMakeCCompilerABI.c.o -sys-header-deps -D ANDROID -D _FORTIFY_SOURCE=2 -isysroot /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/local/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/x86_64-linux-android -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include -Wformat -ferror-limit 19 -femulated-tls -stack-protector 2 -fgnuc-version=4.2.1 -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_87ca4.dir/CMakeCCompilerABI.c.o -x c /usr/local/Cellar/cmake/3.22.1/share/cmake/Modules/CMakeCCompilerABI.c
+ "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang" -cc1 -triple x86_64-none-linux-android26 -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -target-feature +sse4.2 -target-feature +popcnt -target-feature +cx16 -tune-cpu generic -debug-info-kind=constructor -dwarf-version=4 -debugger-tuning=gdb -fdebug-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -v -ffunction-sections -fdata-sections -fcoverage-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -resource-dir /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18 -dependency-file CMakeFiles/cmTC_d2536.dir/CMakeCCompilerABI.c.o.d -MT CMakeFiles/cmTC_d2536.dir/CMakeCCompilerABI.c.o -sys-header-deps -D ANDROID -D _FORTIFY_SOURCE=2 -isysroot /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/local/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/x86_64-linux-android -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include -Wformat -ferror-limit 19 -femulated-tls -stack-protector 2 -fgnuc-version=4.2.1 -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_d2536.dir/CMakeCCompilerABI.c.o -x c /usr/local/Cellar/cmake/3.22.1/share/cmake/Modules/CMakeCCompilerABI.c
 clang -cc1 version 18.0.1 based upon LLVM 18.0.1 default target x86_64-apple-darwin23.6.0
 ignoring nonexistent directory "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/local/include"
 ignoring nonexistent directory "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/include"
@@ -45,12 +45,12 @@ ignoring nonexistent directory "/Users/mafalda/Library/Android/sdk/ndk/27.0.1207
  /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/x86_64-linux-android
  /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include
 End of search list.
-[2/2] Linking C executable cmTC_87ca4
+[2/2] Linking C executable cmTC_d2536
 Android (12027248, +pgo, -bolt, +lto, -mlgo, based on r522817) clang version 18.0.1 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262)
 Target: x86_64-none-linux-android26
 Thread model: posix
 InstalledDir: /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin
- "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/ld.lld" --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -z now -z relro --hash-style=gnu --eh-frame-hdr -m elf_x86_64 -pie -dynamic-linker /system/bin/linker64 -o cmTC_87ca4 /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtbegin_dynamic.o -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/x86_64 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib --build-id=sha1 --no-rosegment --no-undefined-version --fatal-warnings --no-undefined CMakeFiles/cmTC_87ca4.dir/CMakeCCompilerABI.c.o /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl -lc /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtend_android.o
+ "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/ld.lld" --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -z now -z relro --hash-style=gnu --eh-frame-hdr -m elf_x86_64 -pie -dynamic-linker /system/bin/linker64 -o cmTC_d2536 /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtbegin_dynamic.o -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/x86_64 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib --build-id=sha1 --no-rosegment --no-undefined-version --fatal-warnings --no-undefined CMakeFiles/cmTC_d2536.dir/CMakeCCompilerABI.c.o /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl -lc /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtend_android.o
 
 
 
@@ -71,13 +71,13 @@ Parsed C implicit link information from above output:
   link line regex: [^( *|.*[/\])(ld\.lld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
   ignore line: [Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp]
   ignore line: []
-  ignore line: [Run Build Command(s):/usr/local/bin/ninja cmTC_87ca4 && [1/2] Building C object CMakeFiles/cmTC_87ca4.dir/CMakeCCompilerABI.c.o]
+  ignore line: [Run Build Command(s):/usr/local/bin/ninja cmTC_d2536 && [1/2] Building C object CMakeFiles/cmTC_d2536.dir/CMakeCCompilerABI.c.o]
   ignore line: [Android (12027248  +pgo  -bolt  +lto  -mlgo  based on r522817) clang version 18.0.1 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262)]
   ignore line: [Target: x86_64-none-linux-android26]
   ignore line: [Thread model: posix]
   ignore line: [InstalledDir: /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin]
   ignore line: [ (in-process)]
-  ignore line: [ "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang" -cc1 -triple x86_64-none-linux-android26 -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -target-feature +sse4.2 -target-feature +popcnt -target-feature +cx16 -tune-cpu generic -debug-info-kind=constructor -dwarf-version=4 -debugger-tuning=gdb -fdebug-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -v -ffunction-sections -fdata-sections -fcoverage-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -resource-dir /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18 -dependency-file CMakeFiles/cmTC_87ca4.dir/CMakeCCompilerABI.c.o.d -MT CMakeFiles/cmTC_87ca4.dir/CMakeCCompilerABI.c.o -sys-header-deps -D ANDROID -D _FORTIFY_SOURCE=2 -isysroot /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/local/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/x86_64-linux-android -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include -Wformat -ferror-limit 19 -femulated-tls -stack-protector 2 -fgnuc-version=4.2.1 -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_87ca4.dir/CMakeCCompilerABI.c.o -x c /usr/local/Cellar/cmake/3.22.1/share/cmake/Modules/CMakeCCompilerABI.c]
+  ignore line: [ "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang" -cc1 -triple x86_64-none-linux-android26 -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -target-feature +sse4.2 -target-feature +popcnt -target-feature +cx16 -tune-cpu generic -debug-info-kind=constructor -dwarf-version=4 -debugger-tuning=gdb -fdebug-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -v -ffunction-sections -fdata-sections -fcoverage-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -resource-dir /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18 -dependency-file CMakeFiles/cmTC_d2536.dir/CMakeCCompilerABI.c.o.d -MT CMakeFiles/cmTC_d2536.dir/CMakeCCompilerABI.c.o -sys-header-deps -D ANDROID -D _FORTIFY_SOURCE=2 -isysroot /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/local/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/x86_64-linux-android -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include -Wformat -ferror-limit 19 -femulated-tls -stack-protector 2 -fgnuc-version=4.2.1 -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_d2536.dir/CMakeCCompilerABI.c.o -x c /usr/local/Cellar/cmake/3.22.1/share/cmake/Modules/CMakeCCompilerABI.c]
   ignore line: [clang -cc1 version 18.0.1 based upon LLVM 18.0.1 default target x86_64-apple-darwin23.6.0]
   ignore line: [ignoring nonexistent directory "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/local/include"]
   ignore line: [ignoring nonexistent directory "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/include"]
@@ -87,12 +87,12 @@ Parsed C implicit link information from above output:
   ignore line: [ /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/x86_64-linux-android]
   ignore line: [ /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include]
   ignore line: [End of search list.]
-  ignore line: [[2/2] Linking C executable cmTC_87ca4]
+  ignore line: [[2/2] Linking C executable cmTC_d2536]
   ignore line: [Android (12027248  +pgo  -bolt  +lto  -mlgo  based on r522817) clang version 18.0.1 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262)]
   ignore line: [Target: x86_64-none-linux-android26]
   ignore line: [Thread model: posix]
   ignore line: [InstalledDir: /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin]
-  link line: [ "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/ld.lld" --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -z now -z relro --hash-style=gnu --eh-frame-hdr -m elf_x86_64 -pie -dynamic-linker /system/bin/linker64 -o cmTC_87ca4 /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtbegin_dynamic.o -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/x86_64 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib --build-id=sha1 --no-rosegment --no-undefined-version --fatal-warnings --no-undefined CMakeFiles/cmTC_87ca4.dir/CMakeCCompilerABI.c.o /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl -lc /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtend_android.o]
+  link line: [ "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/ld.lld" --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -z now -z relro --hash-style=gnu --eh-frame-hdr -m elf_x86_64 -pie -dynamic-linker /system/bin/linker64 -o cmTC_d2536 /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtbegin_dynamic.o -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/x86_64 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib --build-id=sha1 --no-rosegment --no-undefined-version --fatal-warnings --no-undefined CMakeFiles/cmTC_d2536.dir/CMakeCCompilerABI.c.o /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl -lc /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtend_android.o]
     arg [/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/ld.lld] ==> ignore
     arg [--sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot] ==> ignore
     arg [-znow] ==> ignore
@@ -105,7 +105,7 @@ Parsed C implicit link information from above output:
     arg [-dynamic-linker] ==> ignore
     arg [/system/bin/linker64] ==> ignore
     arg [-o] ==> ignore
-    arg [cmTC_87ca4] ==> ignore
+    arg [cmTC_d2536] ==> ignore
     arg [/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtbegin_dynamic.o] ==> obj [/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtbegin_dynamic.o]
     arg [-L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/x86_64] ==> dir [/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/x86_64]
     arg [-L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26] ==> dir [/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26]
@@ -116,7 +116,7 @@ Parsed C implicit link information from above output:
     arg [--no-undefined-version] ==> ignore
     arg [--fatal-warnings] ==> ignore
     arg [--no-undefined] ==> ignore
-    arg [CMakeFiles/cmTC_87ca4.dir/CMakeCCompilerABI.c.o] ==> ignore
+    arg [CMakeFiles/cmTC_d2536.dir/CMakeCCompilerABI.c.o] ==> ignore
     arg [/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a] ==> lib [/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a]
     arg [-l:libunwind.a] ==> lib [-l:libunwind.a]
     arg [-ldl] ==> lib [dl]
@@ -140,13 +140,13 @@ Parsed C implicit link information from above output:
 Detecting CXX compiler ABI info compiled with the following output:
 Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/local/bin/ninja cmTC_6fbd5 && [1/2] Building CXX object CMakeFiles/cmTC_6fbd5.dir/CMakeCXXCompilerABI.cpp.o
+Run Build Command(s):/usr/local/bin/ninja cmTC_505a6 && [1/2] Building CXX object CMakeFiles/cmTC_505a6.dir/CMakeCXXCompilerABI.cpp.o
 Android (12027248, +pgo, -bolt, +lto, -mlgo, based on r522817) clang version 18.0.1 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262)
 Target: x86_64-none-linux-android26
 Thread model: posix
 InstalledDir: /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin
  (in-process)
- "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++" -cc1 -triple x86_64-none-linux-android26 -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -target-feature +sse4.2 -target-feature +popcnt -target-feature +cx16 -tune-cpu generic -debug-info-kind=constructor -dwarf-version=4 -debugger-tuning=gdb -fdebug-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -v -ffunction-sections -fdata-sections -fcoverage-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -resource-dir /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18 -dependency-file CMakeFiles/cmTC_6fbd5.dir/CMakeCXXCompilerABI.cpp.o.d -MT CMakeFiles/cmTC_6fbd5.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -D ANDROID -D _FORTIFY_SOURCE=2 -isysroot /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/c++/v1 -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/local/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/x86_64-linux-android -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include -Wformat -fdeprecated-macro -ferror-limit 19 -femulated-tls -stack-protector 2 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_6fbd5.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/local/Cellar/cmake/3.22.1/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+ "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++" -cc1 -triple x86_64-none-linux-android26 -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -target-feature +sse4.2 -target-feature +popcnt -target-feature +cx16 -tune-cpu generic -debug-info-kind=constructor -dwarf-version=4 -debugger-tuning=gdb -fdebug-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -v -ffunction-sections -fdata-sections -fcoverage-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -resource-dir /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18 -dependency-file CMakeFiles/cmTC_505a6.dir/CMakeCXXCompilerABI.cpp.o.d -MT CMakeFiles/cmTC_505a6.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -D ANDROID -D _FORTIFY_SOURCE=2 -isysroot /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/c++/v1 -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/local/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/x86_64-linux-android -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include -Wformat -fdeprecated-macro -ferror-limit 19 -femulated-tls -stack-protector 2 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_505a6.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/local/Cellar/cmake/3.22.1/share/cmake/Modules/CMakeCXXCompilerABI.cpp
 clang -cc1 version 18.0.1 based upon LLVM 18.0.1 default target x86_64-apple-darwin23.6.0
 ignoring nonexistent directory "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/local/include"
 ignoring nonexistent directory "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/include"
@@ -157,12 +157,12 @@ ignoring nonexistent directory "/Users/mafalda/Library/Android/sdk/ndk/27.0.1207
  /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/x86_64-linux-android
  /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include
 End of search list.
-[2/2] Linking CXX executable cmTC_6fbd5
+[2/2] Linking CXX executable cmTC_505a6
 Android (12027248, +pgo, -bolt, +lto, -mlgo, based on r522817) clang version 18.0.1 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262)
 Target: x86_64-none-linux-android26
 Thread model: posix
 InstalledDir: /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin
- "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/ld.lld" --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -z now -z relro --hash-style=gnu --eh-frame-hdr -m elf_x86_64 -pie -dynamic-linker /system/bin/linker64 -o cmTC_6fbd5 /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtbegin_dynamic.o -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/x86_64 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib --build-id=sha1 --no-rosegment --no-undefined-version --fatal-warnings --no-undefined CMakeFiles/cmTC_6fbd5.dir/CMakeCXXCompilerABI.cpp.o -Bstatic -lc++ -Bdynamic -lm /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl -lc /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtend_android.o
+ "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/ld.lld" --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -z now -z relro --hash-style=gnu --eh-frame-hdr -m elf_x86_64 -pie -dynamic-linker /system/bin/linker64 -o cmTC_505a6 /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtbegin_dynamic.o -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/x86_64 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib --build-id=sha1 --no-rosegment --no-undefined-version --fatal-warnings --no-undefined CMakeFiles/cmTC_505a6.dir/CMakeCXXCompilerABI.cpp.o -Bstatic -lc++ -Bdynamic -lm /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl -lc /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtend_android.o
 
 
 
@@ -185,13 +185,13 @@ Parsed CXX implicit link information from above output:
   link line regex: [^( *|.*[/\])(ld\.lld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
   ignore line: [Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp]
   ignore line: []
-  ignore line: [Run Build Command(s):/usr/local/bin/ninja cmTC_6fbd5 && [1/2] Building CXX object CMakeFiles/cmTC_6fbd5.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [Run Build Command(s):/usr/local/bin/ninja cmTC_505a6 && [1/2] Building CXX object CMakeFiles/cmTC_505a6.dir/CMakeCXXCompilerABI.cpp.o]
   ignore line: [Android (12027248  +pgo  -bolt  +lto  -mlgo  based on r522817) clang version 18.0.1 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262)]
   ignore line: [Target: x86_64-none-linux-android26]
   ignore line: [Thread model: posix]
   ignore line: [InstalledDir: /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin]
   ignore line: [ (in-process)]
-  ignore line: [ "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++" -cc1 -triple x86_64-none-linux-android26 -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -target-feature +sse4.2 -target-feature +popcnt -target-feature +cx16 -tune-cpu generic -debug-info-kind=constructor -dwarf-version=4 -debugger-tuning=gdb -fdebug-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -v -ffunction-sections -fdata-sections -fcoverage-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -resource-dir /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18 -dependency-file CMakeFiles/cmTC_6fbd5.dir/CMakeCXXCompilerABI.cpp.o.d -MT CMakeFiles/cmTC_6fbd5.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -D ANDROID -D _FORTIFY_SOURCE=2 -isysroot /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/c++/v1 -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/local/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/x86_64-linux-android -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include -Wformat -fdeprecated-macro -ferror-limit 19 -femulated-tls -stack-protector 2 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_6fbd5.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/local/Cellar/cmake/3.22.1/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [ "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++" -cc1 -triple x86_64-none-linux-android26 -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -target-feature +sse4.2 -target-feature +popcnt -target-feature +cx16 -tune-cpu generic -debug-info-kind=constructor -dwarf-version=4 -debugger-tuning=gdb -fdebug-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -v -ffunction-sections -fdata-sections -fcoverage-compilation-dir=/Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp -resource-dir /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18 -dependency-file CMakeFiles/cmTC_505a6.dir/CMakeCXXCompilerABI.cpp.o.d -MT CMakeFiles/cmTC_505a6.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -D ANDROID -D _FORTIFY_SOURCE=2 -isysroot /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/c++/v1 -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/include -internal-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/local/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/x86_64-linux-android -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/include -internal-externc-isystem /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include -Wformat -fdeprecated-macro -ferror-limit 19 -femulated-tls -stack-protector 2 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_505a6.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/local/Cellar/cmake/3.22.1/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
   ignore line: [clang -cc1 version 18.0.1 based upon LLVM 18.0.1 default target x86_64-apple-darwin23.6.0]
   ignore line: [ignoring nonexistent directory "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/local/include"]
   ignore line: [ignoring nonexistent directory "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/include"]
@@ -202,12 +202,12 @@ Parsed CXX implicit link information from above output:
   ignore line: [ /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/x86_64-linux-android]
   ignore line: [ /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include]
   ignore line: [End of search list.]
-  ignore line: [[2/2] Linking CXX executable cmTC_6fbd5]
+  ignore line: [[2/2] Linking CXX executable cmTC_505a6]
   ignore line: [Android (12027248  +pgo  -bolt  +lto  -mlgo  based on r522817) clang version 18.0.1 (https://android.googlesource.com/toolchain/llvm-project d8003a456d14a3deb8054cdaa529ffbf02d9b262)]
   ignore line: [Target: x86_64-none-linux-android26]
   ignore line: [Thread model: posix]
   ignore line: [InstalledDir: /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin]
-  link line: [ "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/ld.lld" --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -z now -z relro --hash-style=gnu --eh-frame-hdr -m elf_x86_64 -pie -dynamic-linker /system/bin/linker64 -o cmTC_6fbd5 /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtbegin_dynamic.o -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/x86_64 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib --build-id=sha1 --no-rosegment --no-undefined-version --fatal-warnings --no-undefined CMakeFiles/cmTC_6fbd5.dir/CMakeCXXCompilerABI.cpp.o -Bstatic -lc++ -Bdynamic -lm /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl -lc /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtend_android.o]
+  link line: [ "/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/ld.lld" --sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -z now -z relro --hash-style=gnu --eh-frame-hdr -m elf_x86_64 -pie -dynamic-linker /system/bin/linker64 -o cmTC_505a6 /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtbegin_dynamic.o -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/x86_64 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26 -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android -L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib --build-id=sha1 --no-rosegment --no-undefined-version --fatal-warnings --no-undefined CMakeFiles/cmTC_505a6.dir/CMakeCXXCompilerABI.cpp.o -Bstatic -lc++ -Bdynamic -lm /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl -lc /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64-android.a -l:libunwind.a -ldl /Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtend_android.o]
     arg [/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/ld.lld] ==> ignore
     arg [--sysroot=/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot] ==> ignore
     arg [-znow] ==> ignore
@@ -220,7 +220,7 @@ Parsed CXX implicit link information from above output:
     arg [-dynamic-linker] ==> ignore
     arg [/system/bin/linker64] ==> ignore
     arg [-o] ==> ignore
-    arg [cmTC_6fbd5] ==> ignore
+    arg [cmTC_505a6] ==> ignore
     arg [/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtbegin_dynamic.o] ==> obj [/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtbegin_dynamic.o]
     arg [-L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/x86_64] ==> dir [/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/x86_64]
     arg [-L/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26] ==> dir [/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26]
@@ -231,7 +231,7 @@ Parsed CXX implicit link information from above output:
     arg [--no-undefined-version] ==> ignore
     arg [--fatal-warnings] ==> ignore
     arg [--no-undefined] ==> ignore
-    arg [CMakeFiles/cmTC_6fbd5.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [CMakeFiles/cmTC_505a6.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
     arg [-Bstatic] ==> search static
     arg [-lc++] ==> lib [c++]
     arg [-Bdynamic] ==> search dynamic
@@ -254,5 +254,526 @@ Parsed CXX implicit link information from above output:
   implicit objs: [/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtbegin_dynamic.o;/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26/crtend_android.o]
   implicit dirs: [/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/lib/clang/18/lib/linux/x86_64;/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android/26;/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib/x86_64-linux-android;/Users/mafalda/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/lib]
   implicit fwks: []
+
+
+Determining if the include file alloca.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_0f337 && [1/2] Building C object CMakeFiles/cmTC_0f337.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_0f337
+
+
+
+Determining if the include file dlfcn.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_604a8 && [1/2] Building C object CMakeFiles/cmTC_604a8.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_604a8
+
+
+
+Determining if the include file inttypes.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_4d524 && [1/2] Building C object CMakeFiles/cmTC_4d524.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_4d524
+
+
+
+Determining if the include file limits.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_da007 && [1/2] Building C object CMakeFiles/cmTC_da007.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_da007
+
+
+
+Determining if the include file malloc.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_d9be6 && [1/2] Building C object CMakeFiles/cmTC_d9be6.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_d9be6
+
+
+
+Determining if the include file memory.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_8c0be && [1/2] Building C object CMakeFiles/cmTC_8c0be.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_8c0be
+
+
+
+Determining if the include file stddef.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_e3a57 && [1/2] Building C object CMakeFiles/cmTC_e3a57.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_e3a57
+
+
+
+Determining if the include file stdint.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_ae9ce && [1/2] Building C object CMakeFiles/cmTC_ae9ce.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_ae9ce
+
+
+
+Determining if the include file stdlib.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_8b099 && [1/2] Building C object CMakeFiles/cmTC_8b099.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_8b099
+
+
+
+Determining if the include file string.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_410ce && [1/2] Building C object CMakeFiles/cmTC_410ce.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_410ce
+
+
+
+Determining if the include file strings.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_320d2 && [1/2] Building C object CMakeFiles/cmTC_320d2.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_320d2
+
+
+
+Determining if the include file sys/types.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_fa39e && [1/2] Building C object CMakeFiles/cmTC_fa39e.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_fa39e
+
+
+
+Determining if the include file sys/time.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_eba77 && [1/2] Building C object CMakeFiles/cmTC_eba77.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_eba77
+
+
+
+Determining if the include file sys/stat.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_86091 && [1/2] Building C object CMakeFiles/cmTC_86091.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_86091
+
+
+
+Determining if the include file time.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_a7e16 && [1/2] Building C object CMakeFiles/cmTC_a7e16.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_a7e16
+
+
+
+Determining if the include file unistd.h exists passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_bda27 && [1/2] Building C object CMakeFiles/cmTC_bda27.dir/CheckIncludeFile.c.o
+[2/2] Linking C executable cmTC_bda27
+
+
+
+Determining if the prototype drand48 exists for HAVE_DECL_DRAND48 passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_6b1bc && [1/2] Building C object CMakeFiles/cmTC_6b1bc.dir/CheckPrototypeDefinition.c.o
+[2/2] Linking C executable cmTC_6b1bc
+
+
+
+Determining if the prototype cosl exists for HAVE_DECL_COSL passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_b5f00 && [1/2] Building C object CMakeFiles/cmTC_b5f00.dir/CheckPrototypeDefinition.c.o
+[2/2] Linking C executable cmTC_b5f00
+
+
+
+Determining if the prototype sinl exists for HAVE_DECL_SINL passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_aacfa && [1/2] Building C object CMakeFiles/cmTC_aacfa.dir/CheckPrototypeDefinition.c.o
+[2/2] Linking C executable cmTC_aacfa
+
+
+
+Determining if the prototype memalign exists for HAVE_DECL_MEMALIGN passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_c056b && [1/2] Building C object CMakeFiles/cmTC_c056b.dir/CheckPrototypeDefinition.c.o
+[2/2] Linking C executable cmTC_c056b
+
+
+
+Determining if the prototype posix_memalign exists for HAVE_DECL_POSIX_MEMALIGN passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_eb59c && [1/2] Building C object CMakeFiles/cmTC_eb59c.dir/CheckPrototypeDefinition.c.o
+[2/2] Linking C executable cmTC_eb59c
+
+
+
+Determining if the clock_gettime exist passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_1ec01 && [1/2] Building C object CMakeFiles/cmTC_1ec01.dir/CheckSymbolExists.c.o
+[2/2] Linking C executable cmTC_1ec01
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <time.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef clock_gettime
+  return ((int*)(&clock_gettime))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the gettimeofday exist passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_9ad20 && [1/2] Building C object CMakeFiles/cmTC_9ad20.dir/CheckSymbolExists.c.o
+[2/2] Linking C executable cmTC_9ad20
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <sys/time.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef gettimeofday
+  return ((int*)(&gettimeofday))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the getpagesize exist passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_b4e0b && [1/2] Building C object CMakeFiles/cmTC_b4e0b.dir/CheckSymbolExists.c.o
+[2/2] Linking C executable cmTC_b4e0b
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef getpagesize
+  return ((int*)(&getpagesize))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the drand48 exist passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_86cdb && [1/2] Building C object CMakeFiles/cmTC_86cdb.dir/CheckSymbolExists.c.o
+[2/2] Linking C executable cmTC_86cdb
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdlib.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef drand48
+  return ((int*)(&drand48))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the srand48 exist passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_e46cd && [1/2] Building C object CMakeFiles/cmTC_e46cd.dir/CheckSymbolExists.c.o
+[2/2] Linking C executable cmTC_e46cd
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdlib.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef srand48
+  return ((int*)(&srand48))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the memalign exist passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_a66d8 && [1/2] Building C object CMakeFiles/cmTC_a66d8.dir/CheckSymbolExists.c.o
+[2/2] Linking C executable cmTC_a66d8
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <malloc.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef memalign
+  return ((int*)(&memalign))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the posix_memalign exist passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_db8ba && [1/2] Building C object CMakeFiles/cmTC_db8ba.dir/CheckSymbolExists.c.o
+[2/2] Linking C executable cmTC_db8ba
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdlib.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef posix_memalign
+  return ((int*)(&posix_memalign))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the alloca exist passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_60bfe && [1/2] Building C object CMakeFiles/cmTC_60bfe.dir/CheckSymbolExists.c.o
+[2/2] Linking C executable cmTC_60bfe
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <alloca.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef alloca
+  return ((int*)(&alloca))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the isnan exist passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_86a46 && [1/2] Building C object CMakeFiles/cmTC_86a46.dir/CheckSymbolExists.c.o
+[2/2] Linking C executable cmTC_86a46
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <math.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef isnan
+  return ((int*)(&isnan))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the snprintf exist passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_3c4cc && [1/2] Building C object CMakeFiles/cmTC_3c4cc.dir/CheckSymbolExists.c.o
+[2/2] Linking C executable cmTC_3c4cc
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdio.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef snprintf
+  return ((int*)(&snprintf))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the strchr exist passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_d338d && [1/2] Building C object CMakeFiles/cmTC_d338d.dir/CheckSymbolExists.c.o
+[2/2] Linking C executable cmTC_d338d
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <string.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strchr
+  return ((int*)(&strchr))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the cosl exist passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_408e0 && [1/2] Building C object CMakeFiles/cmTC_408e0.dir/CheckSymbolExists.c.o
+[2/2] Linking C executable cmTC_408e0
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <math.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef cosl
+  return ((int*)(&cosl))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the sinl exist passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_5a7db && [1/2] Building C object CMakeFiles/cmTC_5a7db.dir/CheckSymbolExists.c.o
+[2/2] Linking C executable cmTC_5a7db
+
+
+File /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <math.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef sinl
+  return ((int*)(&sinl))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining size of float passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_f5513 && [1/2] Building C object CMakeFiles/cmTC_f5513.dir/SIZEOF_FLOAT.c.o
+[2/2] Linking C executable cmTC_f5513
+
+
+
+Determining size of double passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_eaeaa && [1/2] Building C object CMakeFiles/cmTC_eaeaa.dir/SIZEOF_DOUBLE.c.o
+[2/2] Linking C executable cmTC_eaeaa
+
+
+
+Determining size of int passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_9c92b && [1/2] Building C object CMakeFiles/cmTC_9c92b.dir/SIZEOF_INT.c.o
+[2/2] Linking C executable cmTC_9c92b
+
+
+
+Determining size of long passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_a4feb && [1/2] Building C object CMakeFiles/cmTC_a4feb.dir/SIZEOF_LONG.c.o
+[2/2] Linking C executable cmTC_a4feb
+
+
+
+Determining size of long long passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_70a29 && [1/2] Building C object CMakeFiles/cmTC_70a29.dir/SIZEOF_LONG_LONG.c.o
+[2/2] Linking C executable cmTC_70a29
+
+
+
+Determining size of unsigned int passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_31c2b && [1/2] Building C object CMakeFiles/cmTC_31c2b.dir/SIZEOF_UNSIGNED_INT.c.o
+[2/2] Linking C executable cmTC_31c2b
+
+
+
+Determining size of unsigned long passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_44b47 && [1/2] Building C object CMakeFiles/cmTC_44b47.dir/SIZEOF_UNSIGNED_LONG.c.o
+[2/2] Linking C executable cmTC_44b47
+
+
+
+Determining size of unsigned long long passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_5f557 && [1/2] Building C object CMakeFiles/cmTC_5f557.dir/SIZEOF_UNSIGNED_LONG_LONG.c.o
+[2/2] Linking C executable cmTC_5f557
+
+
+
+Determining size of size_t passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_2c2a3 && [1/2] Building C object CMakeFiles/cmTC_2c2a3.dir/SIZEOF_SIZE_T.c.o
+[2/2] Linking C executable cmTC_2c2a3
+
+
+
+Determining size of ptrdiff_t passed with the following output:
+Change Dir: /Users/mafalda/Documents/Operator/AudioCoderAndroid/AudioCoder/.cxx/Debug/1r555n2v/x86_64/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/local/bin/ninja cmTC_56d86 && [1/2] Building C object CMakeFiles/cmTC_56d86.dir/SIZEOF_PTRDIFF_T.c.o
+[2/2] Linking C executable cmTC_56d86
+
 
 

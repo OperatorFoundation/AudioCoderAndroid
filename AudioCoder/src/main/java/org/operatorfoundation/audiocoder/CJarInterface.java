@@ -1,4 +1,4 @@
-package aq.metallists.loudbang.cutil;
+package org.operatorfoundation.audiocoder;
 
 public class CJarInterface {
     static {

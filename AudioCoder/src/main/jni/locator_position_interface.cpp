@@ -154,7 +154,7 @@ private:
 
 extern "C"
 JNIEXPORT jdouble JNICALL
-Java_aq_metallists_loudbang_cutil_CJarInterface_WSPRGetDistanceBetweenLocators(JNIEnv *env,
+Java_org_operatorfoundation_audiocoder_CJarInterface_WSPRGetDistanceBetweenLocators(JNIEnv *env,
                                                                                jclass clazz,
                                                                                jstring a,
                                                                                jstring b) {

@@ -50,7 +50,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
-    implementation(":AudioCoder")
+    implementation(project(":AudioCoder"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

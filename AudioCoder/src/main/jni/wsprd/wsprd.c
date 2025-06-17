@@ -968,7 +968,7 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
 
     t0 = clock();
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
-    jclass cls = (*env)->FindClass(env, "aq/metallists/loudbang/cutil/WSPRMessage");
+    jclass cls = (*env)->FindClass(env, "org/operatorfoundation/audiocoder/WSPRMessage");
 
     npoints = ReadWavFileEx(soundarr, sarlen, wspr_type, idat, qdat);
     treadwav += (float) (clock() - t0) / CLOCKS_PER_SEC;

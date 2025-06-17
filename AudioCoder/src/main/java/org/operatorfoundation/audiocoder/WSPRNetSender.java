@@ -1,4 +1,4 @@
-package aq.metallists.loudbang.cutil;
+package org.operatorfoundation.audiocoder;
 
 import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;

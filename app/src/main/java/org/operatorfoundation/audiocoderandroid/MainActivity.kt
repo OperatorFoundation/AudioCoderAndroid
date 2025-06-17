@@ -11,13 +11,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import org.operatorfoundation.audiocoder.CJarInterface
+import org.operatorfoundation.audiocoder.WSPRMessage
 import org.operatorfoundation.audiocoderandroid.ui.theme.AudioCoderAndroidTheme
 
 
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?)
+    {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
+
         setContent {
             AudioCoderAndroidTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -29,13 +34,19 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+
+
     }
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun Greeting(name: String, modifier: Modifier = Modifier)
+{
+    val test = byteArrayOf(0x00, 0x10, 0x20)
+    val msg: Array<WSPRMessage> = CJarInterface.WSPRDecodeFromPcm(test, 0.0, false)
+
     Text(
-        text = "Hello $name!",
+        text = "Hello $msg!",
         modifier = modifier
     )
 }

@@ -1,4 +1,4 @@
-package aq.metallists.loudbang.cutil;
+package org.operatorfoundation.audiocoder;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -29,8 +29,10 @@ public class DBHelper extends SQLiteOpenHelper {
                 .query("messages", null, null, null,
                         "session", null, "session DESC", "0,1");
         int sid = 1;
-        if (c.moveToNext()) {
-            sid = c.getInt(c.getColumnIndex("session"));
+        int columnIndex = c.getColumnIndex("session");
+
+        if (c.moveToNext() && columnIndex >= 0) {
+            sid = c.getInt(columnIndex);
         }
 
         return sid;

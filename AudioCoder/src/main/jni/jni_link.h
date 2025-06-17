@@ -10,22 +10,22 @@
 
 #endif //LOUD_BANG_JNI_LINK_H
 
-#ifndef _Included_aq_metallists_loudbang_cutil_CJarInterface
-#define _Included_aq_metallists_loudbang_cutil_CJarInterface
+#ifndef _Included_org_operatorfoundation_audiocoder_CJarInterface
+#define _Included_org_operatorfoundation_audiocoder_CJarInterface
 
 extern "C" {
 
 /*
- * Class:     aq_metallists_loudbang_cutil_CJarInterface
+ * Class:     audiocoder_CJarInterface
  * Method:    WSPREncodeToPCM
  * Signature: (Ljava/lang/String;Ljava/lang/String;I)[B
  */
-JNIEXPORT jbyteArray JNICALL Java_aq_metallists_loudbang_cutil_CJarInterface_WSPREncodeToPCM
+JNIEXPORT jbyteArray JNICALL Java_org_operatorfoundation_audiocoder_CJarInterface_WSPREncodeToPCM
         (JNIEnv *, jclass, jstring, jstring, jint, jint,jboolean);
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_aq_metallists_loudbang_cutil_CJarInterface_radioCheck(JNIEnv *env, jclass clazz, jint testvar);
+Java_org_operatorfoundation_audiocoder_CJarInterface_radioCheck(JNIEnv *env, jclass clazz, jint testvar);
 
 
 }
