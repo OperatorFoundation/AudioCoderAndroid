@@ -123,16 +123,14 @@ public static native int radioCheck(int testvar)
 #### `WSPRMessage`
 ```java
 public class WSPRMessage {
-    public float getSNR()      // Signal-to-noise ratio (dB)
-    public double getFREQ()    // Frequency offset (Hz)
-    public String getMSG()     // Complete decoded message
-    public float getDT()       // Time offset (seconds)  
-    public float getDRIFT()    // Frequency drift (Hz)
-    
-    // Additional fields
-    public String call;        // Callsign
-    public String loc;         // Grid locator
-    public int power;          // Power level (dBm)
+    public float getSNR()              // Signal-to-noise ratio (dB)
+    public double getFREQ()            // Frequency offset (Hz)
+    public String getMSG()             // Complete decoded message
+    public float getDT()               // Time offset (seconds)  
+    public float getDRIFT()            // Frequency drift (Hz)
+    public String getCALLSIGN()        // Callsign
+    public String getGRIDSQUARE()      // Grid locator
+    public int getPOWER()              // Power level (dBm)
 }
 ```
 
