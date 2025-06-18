@@ -1,6 +1,7 @@
 package org.operatorfoundation.audiocoder;
 
-public class WSPRMessage {
+public class WSPRMessage
+{
     public String out;
     float snr;
     float dt;
@@ -12,7 +13,8 @@ public class WSPRMessage {
     String loc;
     int power;
 
-    public WSPRMessage(float snr, double freq, float dt, float drift, String message) {
+    public WSPRMessage(float snr, double freq, float dt, float drift, String message)
+    {
         this.snr = snr;
         this.freq = freq;
         this.message = message;
@@ -41,4 +43,10 @@ public class WSPRMessage {
     public float getDRIFT() {
         return this.drift;
     }
+
+    public String getCALLSIGN() { return this.call; }
+
+    public int getPOWER() { return this.power; }
+
+    public String getGRIDSQUARE() { return this.loc; }
 }
