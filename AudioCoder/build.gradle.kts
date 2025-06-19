@@ -82,7 +82,7 @@ afterEvaluate {
                 // Set the Maven coordinates
                 groupId = "com.github.OperatorFoundation"
                 artifactId = "AudioCoderAndroid"
-                version = "1.0-SNAPSHOT" // This will be overridden by JitPack
+                version = "0.1.0" // Pre-Release
 
                 // Add metadata for better Maven repository experience
                 pom {
