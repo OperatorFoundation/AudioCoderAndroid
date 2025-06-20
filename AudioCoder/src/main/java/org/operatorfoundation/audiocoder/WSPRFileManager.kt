@@ -11,7 +11,7 @@ import java.nio.ByteBuffer
 import java.util.Date
 import java.util.Locale
 
-class WsprFileManager(private val context: Context)
+class WSPRFileManager(private val context: Context)
 {
     companion object
     {
