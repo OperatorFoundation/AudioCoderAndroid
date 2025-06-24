@@ -1,19 +1,21 @@
 package org.operatorfoundation.audiocoder
 
+import org.operatorfoundation.audiocoder.WSPRBandplan.getDefaultFrequency
+import org.operatorfoundation.audiocoder.WSPRConstants.SAMPLE_RATE_HZ
+import org.operatorfoundation.audiocoder.WSPRConstants.SYMBOLS_PER_MESSAGE
+
 class WSPRProcessor
 {
     companion object
     {
         // WSPR Audio Format Constants
-        private const val WSPR_SAMPLE_RATE_HZ = 12000 // WSPR uses 12kHz sample rate
         private const val BYTES_PER_SHORT = 2
         private const val BYTE_MASK = 0xFF
         private const val BITS_PER_BYTE = 8
 
         // WSPR Protocol Constants
         private const val WSPR_SYMBOL_DURATION_SECONDS = 0.683f //Each symbol is ~0.683 seconds
-        private const val WSPR_SYMBOLS_PER_MESSAGE = 162 // WSPR messages have 162 symbols
-        private const val WSPR_TRANSMISSION_DURATION_SECONDS = WSPR_SYMBOL_DURATION_SECONDS * WSPR_SYMBOLS_PER_MESSAGE // ~110.6 seconds
+        private const val WSPR_TRANSMISSION_DURATION_SECONDS = WSPR_SYMBOL_DURATION_SECONDS * SYMBOLS_PER_MESSAGE // ~110.6 seconds
 
         // Buffer Timing Constants
         private const val MINIMUM_DECODE_SECONDS = 120f // Minimum for decode attempt
@@ -21,13 +23,8 @@ class WSPRProcessor
         private const val BUFFER_OVERLAP_SECONDS = RECOMMENDED_BUFFER_SECONDS - WSPR_TRANSMISSION_DURATION_SECONDS // ~60 seconds overlap
 
         // Buffer Size Calculations
-        private const val MAXIMUM_BUFFER_SAMPLES = (WSPR_SAMPLE_RATE_HZ * RECOMMENDED_BUFFER_SECONDS).toInt()
-        private const val MINIMUM_DECODE_SAMPLES = (WSPR_SAMPLE_RATE_HZ * MINIMUM_DECODE_SECONDS).toInt()
-
-        // Default WSPR Frequencies
-        private const val DEFAULT_WSPR_20M_FREQUENCY_MHZ = 14.097
-        private const val DEFAULT_WSPR_40M_FREQUENCY_MHZ = 7.040
-        private const val DEFAULT_WSPR_80M_FREQUENCY_MHZ = 3.593
+        private const val MAXIMUM_BUFFER_SAMPLES = (SAMPLE_RATE_HZ * RECOMMENDED_BUFFER_SECONDS).toInt()
+        private const val MINIMUM_DECODE_SAMPLES = (SAMPLE_RATE_HZ * MINIMUM_DECODE_SECONDS).toInt()
     }
 
     private val audioBuffer = mutableListOf<Short>()
@@ -57,7 +54,7 @@ class WSPRProcessor
      */
     fun getBufferDurationSeconds(): Float
     {
-        return audioBuffer.size.toFloat() / WSPR_SAMPLE_RATE_HZ
+        return audioBuffer.size.toFloat() / SAMPLE_RATE_HZ
     }
 
     /**
@@ -72,7 +69,7 @@ class WSPRProcessor
      * Decodes WSPR from buffered audio data.
      */
     fun decodeBufferedWSPR(
-        dialFrequencyMHz: Double = DEFAULT_WSPR_20M_FREQUENCY_MHZ,
+        dialFrequencyMHz: Double = getDefaultFrequency(),
         useLowerSideband: Boolean = false
     ): Array<WSPRMessage>?
     {
