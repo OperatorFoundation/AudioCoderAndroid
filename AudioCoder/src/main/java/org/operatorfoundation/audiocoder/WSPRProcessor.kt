@@ -70,6 +70,10 @@ class WSPRProcessor
      */
     fun isReadyForDecode(): Boolean = audioBuffer.size >= REQUIRED_DECODE_SAMPLES
 
+    fun getRequiredDecodeSamples(): Int
+    {
+        return REQUIRED_DECODE_SAMPLES
+    }
 
     /**
      * Decodes WSPR from buffered audio data using the specified strategy.
