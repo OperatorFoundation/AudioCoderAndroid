@@ -4,6 +4,13 @@ import org.operatorfoundation.audiocoder.WSPRBandplan.getDefaultFrequency
 import org.operatorfoundation.audiocoder.WSPRConstants.SAMPLE_RATE_HZ
 import org.operatorfoundation.audiocoder.WSPRConstants.SYMBOLS_PER_MESSAGE
 
+/**
+ * High-level WSPR audio processing with buffering and multiple decode strategies.
+ *
+ * This processor manages audio buffering and provides two decoding options:
+ * 1. Sliding Window: Overlapping windows to catch transmissions at any time
+ * 2. Time-Aligned: Windows aligned with WSPR 2-minute transmission schedule
+ */
 class WSPRProcessor
 {
     companion object
@@ -16,32 +23,37 @@ class WSPRProcessor
         // WSPR Protocol Constants
         private const val WSPR_SYMBOL_DURATION_SECONDS = 0.683f //Each symbol is ~0.683 seconds
         private const val WSPR_TRANSMISSION_DURATION_SECONDS = WSPR_SYMBOL_DURATION_SECONDS * SYMBOLS_PER_MESSAGE // ~110.6 seconds
+        private const val WSPR_CYCLE_DURATION_SECONDS = 120f // WSPR transmits every 2 minutes
 
         // Buffer Timing Constants
         private const val MINIMUM_DECODE_SECONDS = 120f // Minimum for decode attempt
         private const val RECOMMENDED_BUFFER_SECONDS = 180f // Recommended buffer for reliable decode (3 minutes for overlap)
-        private const val BUFFER_OVERLAP_SECONDS = RECOMMENDED_BUFFER_SECONDS - WSPR_TRANSMISSION_DURATION_SECONDS // ~60 seconds overlap
+
+        // Decode Window Strategy Constants
+        private const val SLIDING_WINDOW_STEP_SECONDS = 30f // Step between sliding windows
+        private const val MAX_DECODE_WINDOWS = 6 // Limit processing to prevent excessive CPU usage
 
         // Buffer Size Calculations
         private const val MAXIMUM_BUFFER_SAMPLES = (SAMPLE_RATE_HZ * RECOMMENDED_BUFFER_SECONDS).toInt()
         private const val MINIMUM_DECODE_SAMPLES = (SAMPLE_RATE_HZ * MINIMUM_DECODE_SECONDS).toInt()
+        private const val OPTIMAL_DECODE_SAMPLES = MINIMUM_DECODE_SAMPLES // Native decoder limit
     }
 
-    private val audioBuffer = mutableListOf<Short>()
+    val audioBuffer = mutableListOf<Short>()
 
     /**
      * Adds audio samples to the WSPR processing buffer.
+     * Automatically manages buffer size to prevent memory issues.
      */
     fun addSamples(samples: ShortArray)
     {
         audioBuffer.addAll(samples.toList())
 
-        // Maintain buffer size within limits
+        // Maintain buffer size within limits using bulk removal
         if (audioBuffer.size > MAXIMUM_BUFFER_SAMPLES)
         {
             val samplesToRemove = audioBuffer.size - MAXIMUM_BUFFER_SAMPLES
 
-            // TODO: Consider saving these to a different buffer
             repeat(samplesToRemove)
             {
                 audioBuffer.removeAt(0)
@@ -52,63 +64,198 @@ class WSPRProcessor
     /**
      * Gets the current buffer duration in seconds.
      */
-    fun getBufferDurationSeconds(): Float
-    {
-        return audioBuffer.size.toFloat() / SAMPLE_RATE_HZ
-    }
+    fun getBufferDurationSeconds(): Float = audioBuffer.size.toFloat() / SAMPLE_RATE_HZ
 
     /**
-     * Checks if buffer has enough data for a WSPR decode
+     * Checks if buffer has enough data for a WSPR decode attempt.
      */
-    fun isReadyForDecode(): Boolean
+    fun isReadyForDecode(): Boolean = audioBuffer.size >= MINIMUM_DECODE_SAMPLES
+
+    /**
+     * Gets the optimal number of samples for WSPR decoding
+     * Uses the minimum decode duration to avoid buffer overflow (CJarInterface.WSPRDecodeFromPcm expects 120 seconds)
+     */
+    private fun getOptimalDecodeSamples(): Int
     {
-        return audioBuffer.size >= MINIMUM_DECODE_SAMPLES
+        return (SAMPLE_RATE_HZ * MINIMUM_DECODE_SECONDS).toInt()
     }
 
     /**
-     * Decodes WSPR from buffered audio data.
+     * Decodes WSPR from buffered audio data using the specified strategy.
+     *
+     * @param dialFrequencyMHz Radio dial frequency in MHz
+     * @param useLowerSideband Whether to use LSB mode (inverts symbol order)
+     * @param useTimeAlignment Use time-aligned windows (true) or sliding windows (false)
+     * @return Array of decoded WSPR messages, or null if insufficient data
      */
     fun decodeBufferedWSPR(
         dialFrequencyMHz: Double = getDefaultFrequency(),
-        useLowerSideband: Boolean = false
+        useLowerSideband: Boolean = false,
+        useTimeAlignment: Boolean = false
     ): Array<WSPRMessage>?
     {
-        if (!isReadyForDecode()) { return null }
+        if (!isReadyForDecode()) return null
 
-        val audioBytes = convertShortsToBytes(audioBuffer.toShortArray())
-        return CJarInterface.WSPRDecodeFromPcm(audioBytes, dialFrequencyMHz, useLowerSideband)
+        val decodeWindows = if (useTimeAlignment)
+        {
+            generateTimeAlignedWindows()
+        }
+        else
+        {
+            generateSlidingWindows()
+        }
+
+        return processDecodeWindows(decodeWindows, dialFrequencyMHz, useLowerSideband)
     }
 
     /**
-     * Clears the audio buffer
+     * Clears the audio buffer.
      */
-    fun clearBuffer()
-    {
+    fun clearBuffer() {
         audioBuffer.clear()
     }
 
-    /**
-     * Gets recommended buffer duration for optimal WSPR decoding.
-     */
+    // Public constants for external use
     fun getRecommendedBufferSeconds(): Float = RECOMMENDED_BUFFER_SECONDS
-
-    /**
-     * Gets minimum buffer duration for WSPR decode attempts.
-     */
     fun getMinimumBufferSeconds(): Float = MINIMUM_DECODE_SECONDS
-
-    /**
-     * Gets the actual WSPR transmission duration
-     */
     fun getWSPRTransmissionSeconds(): Float = WSPR_TRANSMISSION_DURATION_SECONDS
+    fun getBufferOverlapSeconds(): Float = RECOMMENDED_BUFFER_SECONDS - WSPR_TRANSMISSION_DURATION_SECONDS
+
+    // ========== Private Implementation ==========
 
     /**
-     * Gets the buffer overlap duration (extra buffering beyond transmission time)
+     * Represents a window of audio samples for WSPR decoding.
      */
-    fun getBufferOverlapSeconds(): Float = BUFFER_OVERLAP_SECONDS
+    private data class DecodeWindow(
+        val startIndex: Int,
+        val endIndex: Int,
+        val description: String // For debugging/logging
+    )
 
     /**
-     * Converts 16-bit samples to byte array for AudioCoder processing
+     * Generates overlapping sliding windows for WSPR decoding.
+     * This attempts to catch WSPR transmissions that start at any time.
+     */
+    private fun generateSlidingWindows(): List<DecodeWindow>
+    {
+        // Single window if buffer fits within decoder limits
+        if (audioBuffer.size <= OPTIMAL_DECODE_SAMPLES)
+        {
+            return listOf(DecodeWindow(0, audioBuffer.size, "Full buffer"))
+        }
+
+        val windows = mutableListOf<DecodeWindow>()
+        val stepSamples = (SAMPLE_RATE_HZ * SLIDING_WINDOW_STEP_SECONDS).toInt()
+        val maxWindows = minOf(MAX_DECODE_WINDOWS, (audioBuffer.size - OPTIMAL_DECODE_SAMPLES) / stepSamples + 1)
+
+        for (windowIndex in 0 until maxWindows)
+        {
+            val startIndex = windowIndex * stepSamples
+            val endIndex = startIndex + OPTIMAL_DECODE_SAMPLES
+
+            if (endIndex <= audioBuffer.size)
+            {
+                windows.add(DecodeWindow(
+                    startIndex,
+                    endIndex,
+                    "Sliding window ${windowIndex + 1} (${startIndex / SAMPLE_RATE_HZ}s-${endIndex / SAMPLE_RATE_HZ}s)"
+                ))
+            }
+        }
+
+        return windows
+    }
+
+    /**
+     * Generates time-aligned windows based on WSPR 2-minute transmission schedule.
+     * This aligns with expected WSPR timing for decoding.
+     */
+    private fun generateTimeAlignedWindows(): List<DecodeWindow>
+    {
+        val windows = mutableListOf<DecodeWindow>()
+        val cycleSamples = (SAMPLE_RATE_HZ * WSPR_CYCLE_DURATION_SECONDS).toInt()
+        val availableCycles = audioBuffer.size / cycleSamples
+        val maxCycles = minOf(availableCycles, MAX_DECODE_WINDOWS)
+
+        for (cycle in 0 until maxCycles)
+        {
+            val startIndex = cycle * cycleSamples
+            val endIndex = minOf(startIndex + OPTIMAL_DECODE_SAMPLES, audioBuffer.size)
+
+            // Ensure we have enough data to decode
+            val windowDurationSeconds = (endIndex - startIndex.toFloat()) / SAMPLE_RATE_HZ
+            if (windowDurationSeconds >= WSPR_TRANSMISSION_DURATION_SECONDS)
+            {
+                windows.add(DecodeWindow(
+                    startIndex,
+                    endIndex,
+                    description = "Time-aligned cycle ${cycle + 1} (${startIndex / SAMPLE_RATE_HZ}s-${endIndex / SAMPLE_RATE_HZ}s)"
+                ))
+            }
+        }
+
+        return windows
+    }
+
+    /**
+     * Processes multiple decode windows and combines results.
+     * Handles the actual native decoder calls and deduplication.
+     */
+    private fun processDecodeWindows(
+        windows: List<DecodeWindow>,
+        dialFrequencyMHz: Double,
+        useLowerSideband: Boolean
+    ): Array<WSPRMessage>?
+    {
+        val allMessages = mutableListOf<WSPRMessage>()
+
+        for (window in windows)
+        {
+            try
+            {
+                val windowSamples = audioBuffer.subList(window.startIndex, window.endIndex).toShortArray()
+                val audioBytes = convertShortsToBytes(windowSamples)
+
+                val messages = CJarInterface.WSPRDecodeFromPcm(audioBytes, dialFrequencyMHz, useLowerSideband)
+
+                messages?.let {
+                    allMessages.addAll(it.toList())
+                    // Timber.d("Decoded ${it.size} messages from ${window.description}")
+                }
+            }
+            catch (exception: Exception)
+            {
+                // Log decode failure but continue with other windows
+                // Timber.w(exception, "Failed to decode ${window.description}")
+            }
+        }
+
+        return if (allMessages.isNotEmpty())
+        {
+            removeDuplicateMessages(allMessages).toTypedArray()
+        }
+        else { return null }
+    }
+
+    /**
+     * Removes duplicate WSPR messages based on content.
+     */
+    private fun removeDuplicateMessages(messages: List<WSPRMessage>): List<WSPRMessage>
+    {
+        return messages.distinctBy { message ->
+            // Create unique key from message content
+            val callsign = message.call ?: "UNKNOWN"
+            val location = message.loc ?: "UNKNOWN"
+            val power = message.power
+            val snr = String.format("%.1f", message.getSNR()) // Round SNR to 1 decimal
+
+            "${callsign}_${location}_${power}_${snr}"
+        }
+    }
+
+    /**
+     * Converts 16-bit audio samples to byte array for native decoder.
+     * Uses little-endian byte order as expected by the WSPR decoder.
      */
     private fun convertShortsToBytes(samples: ShortArray): ByteArray
     {
