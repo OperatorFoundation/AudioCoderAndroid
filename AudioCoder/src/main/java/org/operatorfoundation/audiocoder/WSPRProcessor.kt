@@ -75,7 +75,7 @@ class WSPRProcessor
      * Gets the optimal number of samples for WSPR decoding
      * Uses the minimum decode duration to avoid buffer overflow (CJarInterface.WSPRDecodeFromPcm expects 120 seconds)
      */
-    private fun getOptimalDecodeSamples(): Int
+    fun getOptimalDecodeSamples(): Int
     {
         return (SAMPLE_RATE_HZ * MINIMUM_DECODE_SECONDS).toInt()
     }
