@@ -26,7 +26,7 @@ class WSPRProcessor
         private const val WSPR_CYCLE_DURATION_SECONDS = 120f // WSPR transmits every 2 minutes
 
         // Buffer Timing Constants
-        private const val MINIMUM_DECODE_SECONDS = 120f // Minimum for decode attempt
+        private const val REQUIRED_DECODE_SECONDS = 114f // Minimum for decode attempt
         private const val RECOMMENDED_BUFFER_SECONDS = 180f // Recommended buffer for reliable decode (3 minutes for overlap)
 
         // Decode Window Strategy Constants
@@ -35,8 +35,7 @@ class WSPRProcessor
 
         // Buffer Size Calculations
         private const val MAXIMUM_BUFFER_SAMPLES = (SAMPLE_RATE_HZ * RECOMMENDED_BUFFER_SECONDS).toInt()
-        private const val MINIMUM_DECODE_SAMPLES = (SAMPLE_RATE_HZ * MINIMUM_DECODE_SECONDS).toInt()
-        private const val OPTIMAL_DECODE_SAMPLES = MINIMUM_DECODE_SAMPLES // Native decoder limit
+        private const val REQUIRED_DECODE_SAMPLES = (SAMPLE_RATE_HZ * REQUIRED_DECODE_SECONDS).toInt() // Native decoder limit
     }
 
     val audioBuffer = mutableListOf<Short>()
@@ -69,16 +68,8 @@ class WSPRProcessor
     /**
      * Checks if buffer has enough data for a WSPR decode attempt.
      */
-    fun isReadyForDecode(): Boolean = audioBuffer.size >= MINIMUM_DECODE_SAMPLES
+    fun isReadyForDecode(): Boolean = audioBuffer.size >= REQUIRED_DECODE_SAMPLES
 
-    /**
-     * Gets the optimal number of samples for WSPR decoding
-     * Uses the minimum decode duration to avoid buffer overflow (CJarInterface.WSPRDecodeFromPcm expects 120 seconds)
-     */
-    fun getOptimalDecodeSamples(): Int
-    {
-        return (SAMPLE_RATE_HZ * MINIMUM_DECODE_SECONDS).toInt()
-    }
 
     /**
      * Decodes WSPR from buffered audio data using the specified strategy.
@@ -117,7 +108,7 @@ class WSPRProcessor
 
     // Public constants for external use
     fun getRecommendedBufferSeconds(): Float = RECOMMENDED_BUFFER_SECONDS
-    fun getMinimumBufferSeconds(): Float = MINIMUM_DECODE_SECONDS
+    fun getMinimumBufferSeconds(): Float = REQUIRED_DECODE_SECONDS
     fun getWSPRTransmissionSeconds(): Float = WSPR_TRANSMISSION_DURATION_SECONDS
     fun getBufferOverlapSeconds(): Float = RECOMMENDED_BUFFER_SECONDS - WSPR_TRANSMISSION_DURATION_SECONDS
 
@@ -139,19 +130,19 @@ class WSPRProcessor
     private fun generateSlidingWindows(): List<DecodeWindow>
     {
         // Single window if buffer fits within decoder limits
-        if (audioBuffer.size <= OPTIMAL_DECODE_SAMPLES)
+        if (audioBuffer.size <= REQUIRED_DECODE_SAMPLES)
         {
             return listOf(DecodeWindow(0, audioBuffer.size, "Full buffer"))
         }
 
         val windows = mutableListOf<DecodeWindow>()
         val stepSamples = (SAMPLE_RATE_HZ * SLIDING_WINDOW_STEP_SECONDS).toInt()
-        val maxWindows = minOf(MAX_DECODE_WINDOWS, (audioBuffer.size - OPTIMAL_DECODE_SAMPLES) / stepSamples + 1)
+        val maxWindows = minOf(MAX_DECODE_WINDOWS, (audioBuffer.size - REQUIRED_DECODE_SAMPLES) / stepSamples + 1)
 
         for (windowIndex in 0 until maxWindows)
         {
             val startIndex = windowIndex * stepSamples
-            val endIndex = startIndex + OPTIMAL_DECODE_SAMPLES
+            val endIndex = startIndex + REQUIRED_DECODE_SAMPLES
 
             if (endIndex <= audioBuffer.size)
             {
@@ -180,7 +171,7 @@ class WSPRProcessor
         for (cycle in 0 until maxCycles)
         {
             val startIndex = cycle * cycleSamples
-            val endIndex = minOf(startIndex + OPTIMAL_DECODE_SAMPLES, audioBuffer.size)
+            val endIndex = minOf(startIndex + REQUIRED_DECODE_SAMPLES, audioBuffer.size)
 
             // Ensure we have enough data to decode
             val windowDurationSeconds = (endIndex - startIndex.toFloat()) / SAMPLE_RATE_HZ
