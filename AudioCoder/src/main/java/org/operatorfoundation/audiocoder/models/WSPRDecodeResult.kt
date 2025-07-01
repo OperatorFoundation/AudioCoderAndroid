@@ -1,7 +1,9 @@
-package org.operatorfoundation.audiocoder
+package org.operatorfoundation.audiocoder.models
 
 import android.icu.util.Calendar
-import java.lang.Math.pow
+import org.operatorfoundation.audiocoder.extensions.format
+import org.operatorfoundation.audiocoder.extensions.formatOffset
+import kotlin.math.abs
 
 /**
  * Represents a successfully decoded WSPR message with all associated metadata.
@@ -113,7 +115,7 @@ data class WSPRDecodeResult(
      * Calculated from dBm using standard conversion formula: P(W) = 10^((P(dBm) - 30) / 10)
      */
     val transmitPowerWatts: Double
-        get() = pow(10.0, (powerLevelDbm - 30.0) / 10.0)
+        get() = Math.pow(10.0, (powerLevelDbm - 30.0) / 10.0)
 
     /**
      * Human-readable power level description.
@@ -192,8 +194,8 @@ data class WSPRDecodeResult(
      */
     fun isSameTransmissionAs(other: WSPRDecodeResult, timeToleranceMs: Long = 5000L): Boolean
     {
-        val timeDifference = kotlin.math.abs(decodeTimestamp - other.decodeTimestamp)
-        val frequencyDifference = kotlin.math.abs(frequencyOffsetHz - other.frequencyOffsetHz)
+        val timeDifference = abs(decodeTimestamp - other.decodeTimestamp)
+        val frequencyDifference = abs(frequencyOffsetHz - other.frequencyOffsetHz)
 
         return callsign == other.callsign &&
                 gridSquare == other.gridSquare &&
@@ -239,25 +241,4 @@ data class WSPRDecodeResult(
             )
         }
     }
-}
-
-// ========== Extension Functions for Formatting ==========
-
-/**
- * Formats a floating-point number to the specified number of decimal places.
- */
-private fun Float.format(decimals: Int): String = "%.${decimals}f".format(this)
-
-/**
- * Formats a double-precision number to the specified number of decimal places.
- */
-private fun Double.format(decimals: Int): String = "%.${decimals}f".format(this)
-
-/**
- * Formats a frequency offset with appropriate sign and units.
- */
-private fun Double.formatOffset(): String
-{
-    val sign = if (this >= 0) "+" else ""
-    return "$sign${format(1)}"
 }

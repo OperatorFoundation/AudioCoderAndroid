@@ -1,7 +1,7 @@
 package org.operatorfoundation.audiocoder
 
 import org.operatorfoundation.audiocoder.WSPRBandplan.getDefaultFrequency
-import org.operatorfoundation.audiocoder.WSPRConstants.SAMPLE_RATE_HZ
+import org.operatorfoundation.audiocoder.WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE
 import org.operatorfoundation.audiocoder.WSPRConstants.SYMBOLS_PER_MESSAGE
 
 /**
@@ -34,8 +34,8 @@ class WSPRProcessor
         private const val MAX_DECODE_WINDOWS = 6 // Limit processing to prevent excessive CPU usage
 
         // Buffer Size Calculations
-        private const val MAXIMUM_BUFFER_SAMPLES = (SAMPLE_RATE_HZ * RECOMMENDED_BUFFER_SECONDS).toInt()
-        private const val REQUIRED_DECODE_SAMPLES = (SAMPLE_RATE_HZ * REQUIRED_DECODE_SECONDS).toInt() // Native decoder limit
+        private const val MAXIMUM_BUFFER_SAMPLES = (WSPR_REQUIRED_SAMPLE_RATE * RECOMMENDED_BUFFER_SECONDS).toInt()
+        private const val REQUIRED_DECODE_SAMPLES = (WSPR_REQUIRED_SAMPLE_RATE * REQUIRED_DECODE_SECONDS).toInt() // Native decoder limit
     }
 
     val audioBuffer = mutableListOf<Short>()
@@ -63,7 +63,7 @@ class WSPRProcessor
     /**
      * Gets the current buffer duration in seconds.
      */
-    fun getBufferDurationSeconds(): Float = audioBuffer.size.toFloat() / SAMPLE_RATE_HZ
+    fun getBufferDurationSeconds(): Float = audioBuffer.size.toFloat() / WSPR_REQUIRED_SAMPLE_RATE
 
     /**
      * Checks if buffer has enough data for a WSPR decode attempt.
@@ -140,7 +140,7 @@ class WSPRProcessor
         }
 
         val windows = mutableListOf<DecodeWindow>()
-        val stepSamples = (SAMPLE_RATE_HZ * SLIDING_WINDOW_STEP_SECONDS).toInt()
+        val stepSamples = (WSPR_REQUIRED_SAMPLE_RATE * SLIDING_WINDOW_STEP_SECONDS).toInt()
         val maxWindows = minOf(MAX_DECODE_WINDOWS, (audioBuffer.size - REQUIRED_DECODE_SAMPLES) / stepSamples + 1)
 
         for (windowIndex in 0 until maxWindows)
@@ -153,7 +153,7 @@ class WSPRProcessor
                 windows.add(DecodeWindow(
                     startIndex,
                     endIndex,
-                    "Sliding window ${windowIndex + 1} (${startIndex / SAMPLE_RATE_HZ}s-${endIndex / SAMPLE_RATE_HZ}s)"
+                    "Sliding window ${windowIndex + 1} (${startIndex / WSPR_REQUIRED_SAMPLE_RATE}s-${endIndex / WSPR_REQUIRED_SAMPLE_RATE}s)"
                 ))
             }
         }
@@ -168,7 +168,7 @@ class WSPRProcessor
     private fun generateTimeAlignedWindows(): List<DecodeWindow>
     {
         val windows = mutableListOf<DecodeWindow>()
-        val cycleSamples = (SAMPLE_RATE_HZ * WSPR_CYCLE_DURATION_SECONDS).toInt()
+        val cycleSamples = (WSPR_REQUIRED_SAMPLE_RATE * WSPR_CYCLE_DURATION_SECONDS).toInt()
         val availableCycles = audioBuffer.size / cycleSamples
         val maxCycles = minOf(availableCycles, MAX_DECODE_WINDOWS)
 
@@ -178,13 +178,13 @@ class WSPRProcessor
             val endIndex = minOf(startIndex + REQUIRED_DECODE_SAMPLES, audioBuffer.size)
 
             // Ensure we have enough data to decode
-            val windowDurationSeconds = (endIndex - startIndex.toFloat()) / SAMPLE_RATE_HZ
+            val windowDurationSeconds = (endIndex - startIndex.toFloat()) / WSPR_REQUIRED_SAMPLE_RATE
             if (windowDurationSeconds >= WSPR_TRANSMISSION_DURATION_SECONDS)
             {
                 windows.add(DecodeWindow(
                     startIndex,
                     endIndex,
-                    description = "Time-aligned cycle ${cycle + 1} (${startIndex / SAMPLE_RATE_HZ}s-${endIndex / SAMPLE_RATE_HZ}s)"
+                    description = "Time-aligned cycle ${cycle + 1} (${startIndex / WSPR_REQUIRED_SAMPLE_RATE}s-${endIndex / WSPR_REQUIRED_SAMPLE_RATE}s)"
                 ))
             }
         }

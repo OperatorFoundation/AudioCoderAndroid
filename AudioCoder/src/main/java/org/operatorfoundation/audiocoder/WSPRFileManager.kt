@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.icu.text.SimpleDateFormat
 import androidx.core.content.FileProvider
-import org.operatorfoundation.audiocoder.WSPRConstants.SAMPLE_RATE_HZ
+import org.operatorfoundation.audiocoder.WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
@@ -84,8 +84,8 @@ class WSPRFileManager(private val context: Context)
                 putInt(16) // PCM format chunk size
                 putShort(1) // PCM format
                 putShort(CHANNELS.toShort())
-                putInt(SAMPLE_RATE_HZ)
-                putInt(SAMPLE_RATE_HZ * CHANNELS * BITS_PER_SAMPLE / 8) // Byte rate
+                putInt(WSPR_REQUIRED_SAMPLE_RATE)
+                putInt(WSPR_REQUIRED_SAMPLE_RATE * CHANNELS * BITS_PER_SAMPLE / 8) // Byte rate
                 putShort((CHANNELS * BITS_PER_SAMPLE / 8).toShort()) // Block align
                 putShort(BITS_PER_SAMPLE.toShort())
 

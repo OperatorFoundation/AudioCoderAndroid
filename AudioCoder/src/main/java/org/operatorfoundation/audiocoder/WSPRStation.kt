@@ -2,6 +2,10 @@ package org.operatorfoundation.audiocoder
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.operatorfoundation.audiocoder.models.WSPRCycleInformation
+import org.operatorfoundation.audiocoder.models.WSPRDecodeResult
+import org.operatorfoundation.audiocoder.models.WSPRStationConfiguration
+import org.operatorfoundation.audiocoder.models.WSPRStationState
 import java.util.*
 
 /**
@@ -18,7 +22,6 @@ import java.util.*
  * - Odd minutes (01, 03, 05...): Silent periods for frequency coordination
  *
  * Usage:
- * ```kotlin
  * val audioSource = MyWSPRAudioSource()
  * val station = WSPRStation(audioSource)
  * station.start() // Begins automatic operation
@@ -27,7 +30,6 @@ import java.util.*
  * station.decodeResults.collect { results ->
  *     // Handle decoded WSPR messages
  * }
- * ```
  *
  * @param audioSource Provider of audio data for WSPR processing
  * @param configuration Station operating parameters and preferences
@@ -39,146 +41,259 @@ class WSPRStation(
 {
     // ========== Core Components ==========
 
-}
+    /**
+     * Processes raw audio data into WSPR messages using the native decoder.
+     * Handles buffering and window management.
+     */
+    private val signalProcessor = WSPRProcessor()
 
-/**
- * WSPR timing constants used throughout the station implementation.
- */
-object WSPRTimingConstants
-{
-    /** Standard WSPR cycle duration: 2 minutes */
-    const val WSPR_CYCLE_DURATION_SECONDS = 120L
+    /**
+     * Manages WSPR protocol timing and synchronization.
+     * Ensures decode attempts align with global WSPR transmission schedule.
+     */
+    private val timingCoordinator = WSPRTimingCoordinator()
 
-    /** WSPR transmission duration: approximately 110.g seconds */
-    const val WSPR_TRANSMISSION_DURATION_SECONDS = 111L
+    /**
+     * Controls the main station operation loop.
+     * Cancelled when the station is stopped.
+     */
+    private var stationOperationJob: Job? = null
 
-    /** Native decoder audio collection requirement: exactly 114 seconds */
-    const val AUDIO_COLLECTION_DURATION_SECONDS = 114L
-    const val AUDIO_COLLECTION_DURATION_MILLISECONDS = AUDIO_COLLECTION_DURATION_SECONDS * 1000L
+    // ========== State Management ==========
 
-    /** Delay before starting decode after transmission begins: 2 seconds */
-    const val DECODE_START_DELAY_SECONDS = 2L
+    /**
+     * Current operational state of the WSPR station.
+     *
+     * States progress through the following lifecycle:
+     * Stopped -> Starting -> Running -> (Collecting -> Decoding -> Complete) -> Running -> Stopping -> Stopped
+     *
+     * Error states can occur at any time and require manual intervention.
+     */
+    private val _stationState = MutableStateFlow<WSPRStationState>(WSPRStationState.Stopped)
+    val stationState: StateFlow<WSPRStationState> = _stationState.asStateFlow()
 
-    /** Duration of each audio chunk read during collection: 1 second */
-    const val AUDIO_CHUNK_DURATION_MILLISECONDS = 1000L
+    /**
+     * Most recent decode results.
+     * Updated after each successful decode cycle with all detected signals.
+     */
+    private val _decodeResults = MutableStateFlow<List<WSPRDecodeResult>>(emptyList())
+    val decodeResults: StateFlow<List<WSPRDecodeResult>> = _decodeResults.asStateFlow()
 
-    /** Pause between audio chunk reads: 100ms */
-    const val AUDIO_COLLECTION_PAUSE_MILLISECONDS = 100L
+    /**
+     * Real-time WSPR cycle information for UI display.
+     * Updates every second with current position in the 2-minute WSPR cycle.
+     */
+    private val _cycleInformation = MutableStateFlow(timingCoordinator.getCurrentCycleInformation())
+    val cycleInformation: StateFlow<WSPRCycleInformation> = _cycleInformation.asStateFlow()
 
-    /** How often to update cycle information for UI: 1 second */
-    const val CYCLE_INFORMATION_UPDATE_INTERVAL_MILLISECONDS = 1000L
+    // ========== Station Control ==========
 
-    /** Brief pause between operations: 2 seconds */
-    const val BRIEF_OPERATION_PAUSE_MILLISECONDS = 2000L
-
-    /** Maximum delay for error backoff: 5 minutes */
-    const val MAXIMUM_ERROR_BACKOFF_MILLISECONDS = 300_000L
-}
-
-/**
- * Configuration parameters for WSPR station operation.
- * Contains all user-configurable settings and operating parameters.
- */
-data class WSPRStationConfiguration(
-    /** WSPR operating frequency in MHz (e.g., 14.0956 for 20m band) */
-    val operatingFrequencyMHz: Double,
-
-    /** Whether to user Lower Sideband mode (LSB) instead of Upper Sideband mode (USB) */
-    val useLowerSidebandMode: Boolean,
-
-    /** Whether to use time-aligned decoding windows vs sliding windows */
-    val useTimeAlignedDecoding: Boolean,
-
-    /** Station callsign for identification (optional) */
-    val stationCallsign: String?,
-
-    /** Station Maidenhead grid square location (optional) */
-    val stationGridSquare: String?
-    )
-{
-    companion object
+    /**
+     * Starts the WSPR station with automatic timing and decoding.
+     *
+     * The station will:
+     * 1. Initialize the audio source
+     * 2. Begin monitoring WSPR timing cycles
+     * 3. Automatically collect audio during transmission windows
+     * 4. Decode collected audio and report results
+     * 5. Continue operation until stopped
+     *
+     * @return Success if station started successfully, Failure with details if initialization failed
+     */
+    suspend fun startStation(): Result<Unit>
     {
-        /**
-         * Creates a default configuration suitable for most WSPR operations.
-         * Uses 20m band (most popular), USB mode, and time-aligned decoding.
-         */
-        fun createDefault(): WSPRStationConfiguration
+        return try
         {
-            return WSPRStationConfiguration(
-                operatingFrequencyMHz = WSPRBandplan.getDefaultFrequency(),
-                useLowerSidebandMode = false,
-                useTimeAlignedDecoding = true,
-                stationCallsign = null,
-                stationGridSquare = null
-            )
+            if (stationOperationJob?.isActive == true)
+            {
+                return Result.failure(
+                    WSPRStationException("Station is already running. Stop the station before restarting.")
+                )
+            }
+
+            _stationState.value = WSPRStationState.Starting
+
+            // Initialize audio source and verify functionality
+            val audioInitializationResult = audioSource.initialize()
+            if (audioInitializationResult.isFailure)
+            {
+                _stationState.value = WSPRStationState.Error("Audio source initialization failed: ${audioInitializationResult.exceptionOrNull()?.message}")
+                return  audioInitializationResult
+            }
+
+            // Start the main station operation loop
+            stationOperationJob = CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+                executeStationOperationLoop()
+            }
+
+            // Start cycle information updates for UI
+            startCycleInformationUpdates()
+
+            _stationState.value = WSPRStationState.Running
+            Result.success(Unit)
         }
-
-        /**
-         * Creates configuration for a specific WSPR band.
-         *
-         * @param bandName Band identifier (e.g., "20m", "40m", "80m")
-         * @return Configuration for the specified band, or default if band not found
-         */
-        fun createForBand(bandName: String): WSPRStationConfiguration
+        catch (exception: Exception)
         {
-            val band = WSPRBandplan.ALL_BANDS.find { it.name.equals(bandName, ignoreCase = true) }
-                ?: WSPRBandplan.ALL_BANDS.first { it.isPopular }
-
-            return WSPRStationConfiguration(
-                operatingFrequencyMHz = band.dialFrequencyMHz,
-                useLowerSidebandMode = false,
-                useTimeAlignedDecoding = true,
-                stationCallsign = null,
-                stationGridSquare = null
-            )
+            val errorMessage = "Failed to start WSPR station: ${exception.message}."
+            _stationState.value = WSPRStationState.Error(errorMessage)
+            Result.failure(WSPRStationException(errorMessage, exception))
         }
     }
-}
-
-/**
- * Represents the current state of WSPR station operation.
- * Provides detailed information about what the station is currently doing.
- */
-sealed class WSPRStationState
-{
-    /** Station is not running */
-    object Stopped : WSPRStationState()
-
-    /** Station is initializing and starting up */
-    object Starting : WSPRStationState()
-
-    /** Station is running and monitoring for decode opportunities */
-    object Running : WSPRStationState()
-
-    /** Station is shutting down */
-    object Stopping : WSPRStationState()
 
     /**
-     * Station is waiting for the next WSPR decode window to begin.
-     * @param windowInfo Information about the upcoming decode window
+     * Stops the WSPR station and releases all resources.
+     *
+     * This method:
+     * 1. Cancels any ongoing decode operations
+     * 2. Stops audio source
+     * 3. Cleans up all resources
+     * 4. Returns station to stopped state
+     *
+     * It is safe to call this method multiple times.
      */
-    data class WaitingForNextWindow(val windowInfo: WSPRDecodeWindowInformation) : WSPRStationState()
+    suspend fun stopStation()
+    {
+        _stationState.value = WSPRStationState.Stopping
 
-    /** Station is preparing to collect audio (clearing buffers, etc.) */
-    object PreparingForCollection : WSPRStationState()
+        try
+        {
+            // Cancel all ongoing operations
+            stationOperationJob?.cancel()
+            stationOperationJob?.join() // Wait for graceful shutdown
 
-    /** Station is actively collecting audio for decode */
-    object CollectingAudio : WSPRStationState()
+            // Clean up audio source
+            audioSource.cleanup()
 
-    /** Station is processing collected audio through the WSPR decoder */
-    object ProcessingAudio : WSPRStationState()
+            // Clear any buffered data
+            signalProcessor.clearBuffer()
+        }
+        catch (exception: Exception)
+        {
+            // Log error but continue shutdown
+        }
+        finally
+        {
+            _stationState.value = WSPRStationState.Stopped
+        }
+    }
 
     /**
-     * Decode cycle completed successfully.
-     * @param decodedSignalCount Number of WSPR signals found in this cycle
+     * Triggers an immediate WSPR decode attempt if timing conditions are favorable.
+     *
+     * This method respects WSPR timing constraints and will only attempt to decode
+     * if we are currently in a valid WSPR transimission window.
+     *
+     * @return Success with the decode results, or Failure if timing is invalid or decode fails.
      */
-    data class DecodeCompleted(val decodedSignalCount: Int) : WSPRStationState()
+    suspend fun requestImmediateDecode(): Result<List<WSPRDecodeResult>>
+    {
+        return try {
+            if (!timingCoordinator.isCurrentlyInValidDecodeWindow())
+            {
+                val nextWindowInfo = timingCoordinator.getTimeUntilNextDecodeWindow()
+                return Result.failure(
+                    WSPRStationException("Not in valid WSPR decode window. Next window starts in ${nextWindowInfo.secondsUntilWindow} seconds.")
+                )
+            }
+
+            val previousState = _stationState.value
+            val decodeResults = performCompleteDecodeSequence()
+            _stationState.value = previousState // Restore previous state
+
+            Result.success(decodeResults)
+        }
+        catch (exception: Exception)
+        {
+            Result.failure(WSPRStationException("Manual decode failed: ${exception.message}", exception))
+        }
+    }
+
+    // ========== Core Operation Logic ==========
 
     /**
-     * Station encountered an error and requires attention.
-     * @param errorDescription Human-readable description of the error
+     * Main station operation loop that runs continuously while the station is active.
+     *
+     * This loop:
+     * 1. Calculates the next optimal decode window
+     * 2. Waits until the window begins
+     * 3. Performs audio collection and decoding
+     * 4. Reports results
+     * 5. Repeats indefinitely
+     *
+     * The loop handles exceptions gracefully and includes exponential backoff
+     * for error recovery to prevent resource exhaustion.
      */
-    data class Error(val errorDescription: String) : WSPRStationState()
+    private suspend fun executeStationOperationLoop()
+    {
+        var consecutiveErrorCount = 0
+        val maximumConsecutiveErrors = 5
+        val baseErrorDelayMilliseconds = 10_000L // 10 seconds
+
+        while (stationOperationJob?.isActive == true)
+        {
+            try
+            {
+                val nextDecodeWindowInfo = timingCoordinator.getTimeUntilNextDecodeWindow()
+                val millisecondsUntilDecodeWindow = nextDecodeWindowInfo.millisecondsUntilWindow
+
+                if (millisecondsUntilDecodeWindow > 0)
+                {
+                    _stationState.value = WSPRStationState.WaitingForNextWindow(nextDecodeWindowInfo)
+                    delay(millisecondsUntilDecodeWindow)
+                }
+
+                // Perform the complete decode sequence
+                val decodedResults = performCompleteDecodeSequence()
+                _stationState.value = WSPRStationState.DecodeCompleted(decodedResults.size)
+
+                // Reset error counter on successful operation
+                consecutiveErrorCount = 0
+
+                // Brief pause before calculating the next window
+                delay(WSPRTimingConstants.BRIEF_OPERATION_PAUSE_MILLISECONDS)
+            }
+            catch (exception: Exception)
+            {
+                consecutiveErrorCount++
+                val errorMessage = "Station operation error (${consecutiveErrorCount}/${maximumConsecutiveErrors}): ${exception.message}"
+                _stationState.value = WSPRStationState.Error(errorMessage)
+
+                if (consecutiveErrorCount >= maximumConsecutiveErrors) {
+                    // Too many consecutive errors - stop station
+                    break
+                }
+
+                // Exponential backoff for error recovery
+                val errorDelayMilliseconds = baseErrorDelayMilliseconds * (1L shl (consecutiveErrorCount - 1))
+                delay(errorDelayMilliseconds.coerceAtMost(WSPRTimingConstants.MAXIMUM_ERROR_BACKOFF_MILLISECONDS))
+            }
+        }
+    }
+
+    /**
+     * Performs the complete WSPR decode sequence: audio collection, processing, and result generation.
+     *
+     * This method implements the standard WSPR decode workflow:
+     * 1. Clear any existing audio buffer
+     * 2. Collect exactly 114 seconds of audio (native decoder requirement)
+     * 3. Process collected audio through WSPR decoder
+     * 4. Convert results to application format
+     * 5. Update result state
+     *
+     * @return List of decoded WSPR messages found in the audio
+     * @throws WSPRStationException if decode process fails
+     */
+    private suspend fun performCompleteDecodeSequence(): List<WSPRDecodeResult>
+    {
+        // Phase 1: Prepare for audio collection
+        _stationState.value = WSPRStationState.PreparingForCollection
+        signalProcessor.clearBuffer()
+
+        // Phase 2: Collect audio for the required duration
+        _stationState.value = WSPRStationState.CollectingAudio
+        val audioCollectionStartTime = System.currentTimeMillis()
+    }
+
 }
 
 /**
