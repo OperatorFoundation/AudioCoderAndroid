@@ -1,10 +1,12 @@
 package org.operatorfoundation.audiocoder
 
 import android.icu.util.Calendar
+import org.operatorfoundation.audiocoder.WSPRTimingConstants.DECODE_START_DELAY_SECONDS
 import org.operatorfoundation.audiocoder.WSPRTimingConstants.DECODE_WINDOW_END_SECOND
 
 import org.operatorfoundation.audiocoder.WSPRTimingConstants.MINUTES_PER_HOUR
 import org.operatorfoundation.audiocoder.WSPRTimingConstants.MINUTES_PER_WSPR_CYCLE
+import org.operatorfoundation.audiocoder.WSPRTimingConstants.SECONDS_PER_MINUTE
 import org.operatorfoundation.audiocoder.models.WSPRCycleInformation
 import org.operatorfoundation.audiocoder.models.WSPRDecodeWindowInformation
 
@@ -106,14 +108,14 @@ class WSPRTimingCoordinator
         val currentSecondInMinute = currentTimeCalendar.get(Calendar.SECOND)
 
         // Cneck if we're in an even minute (transmission window)
-        val isEvenMinute = (currentMinuteInHour % WSPRTimingConstants.MINUTES_PER_WSPR_CYCLE == 0)
+        val isEvenMinute = (currentMinuteInHour % MINUTES_PER_WSPR_CYCLE == 0)
 
         // Calculate position within the current 2-minute WSPR cycle (0-119 seconds)
         val cyclePositionSeconds = calculatePositionInCurrentWSPRCycle(currentMinuteInHour, currentSecondInMinute)
 
         // Check timing constraints within the full 2-minute cycle
-        val isPastDecodeStartDelay = (cyclePositionSeconds >= WSPRTimingConstants.DECODE_START_DELAY_SECONDS)
-        val isBeforeDecodeWindowEnd = (cyclePositionSeconds <= WSPRTimingConstants.DECODE_WINDOW_END_SECOND)
+        val isPastDecodeStartDelay = (cyclePositionSeconds >= DECODE_START_DELAY_SECONDS)
+        val isBeforeDecodeWindowEnd = (cyclePositionSeconds <= DECODE_WINDOW_END_SECOND)
 
         return isEvenMinute && isPastDecodeStartDelay && isBeforeDecodeWindowEnd
     }
@@ -131,8 +133,8 @@ class WSPRTimingCoordinator
      */
     private fun calculatePositionInCurrentWSPRCycle(currentMinute: Int, currentSecond: Int): Int
     {
-        val minuteInCycle = currentMinute % WSPRTimingConstants.MINUTES_PER_WSPR_CYCLE
-        return minuteInCycle * WSPRTimingConstants.SECONDS_PER_MINUTE + currentSecond
+        val minuteInCycle = currentMinute % MINUTES_PER_WSPR_CYCLE
+        return minuteInCycle * SECONDS_PER_MINUTE + currentSecond
     }
 
     /**

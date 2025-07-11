@@ -1,6 +1,7 @@
 package org.operatorfoundation.audiocoder.models
 
 import org.operatorfoundation.audiocoder.WSPRTimingConstants
+import org.operatorfoundation.audiocoder.WSPRTimingConstants.WSPR_CYCLE_DURATION_SECONDS
 
 /**
  * Real-time information about the current WSPR cycle state.
@@ -36,6 +37,6 @@ data class WSPRCycleInformation(
     /**
      * Progress through current 2-minute cycle as a percentage (0.0 - 1.0).
      */
-    val currentCyclePercentage: Float
-        get() = cyclePositionSeconds.toFloat() / WSPRTimingConstants.WSPR_CYCLE_DURATION_SECONDS.toFloat()
+    val cycleProgressPercentage: Float
+        get() = cyclePositionSeconds.toFloat() / WSPR_CYCLE_DURATION_SECONDS.toFloat()
 }

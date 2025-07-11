@@ -2,6 +2,10 @@ package org.operatorfoundation.audiocoder
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.operatorfoundation.audiocoder.WSPRTimingConstants.AUDIO_CHUNK_DURATION_MILLISECONDS
+import org.operatorfoundation.audiocoder.WSPRTimingConstants.AUDIO_COLLECTION_DURATION_MILLISECONDS
+import org.operatorfoundation.audiocoder.WSPRTimingConstants.AUDIO_COLLECTION_PAUSE_MILLISECONDS
+import org.operatorfoundation.audiocoder.WSPRTimingConstants.CYCLE_INFORMATION_UPDATE_INTERVAL_MILLISECONDS
 import org.operatorfoundation.audiocoder.models.WSPRCycleInformation
 import org.operatorfoundation.audiocoder.models.WSPRDecodeResult
 import org.operatorfoundation.audiocoder.models.WSPRStationConfiguration
@@ -73,7 +77,7 @@ class WSPRStation(
     val stationState: StateFlow<WSPRStationState> = _stationState.asStateFlow()
 
     /**
-     * Most recent decode results.
+     * Most recent WSPR decode results.
      * Updated after each successful decode cycle with all detected signals.
      */
     private val _decodeResults = MutableStateFlow<List<WSPRDecodeResult>>(emptyList())
@@ -187,7 +191,8 @@ class WSPRStation(
      */
     suspend fun requestImmediateDecode(): Result<List<WSPRDecodeResult>>
     {
-        return try {
+        return try
+        {
             if (!timingCoordinator.isCurrentlyInValidDecodeWindow())
             {
                 val nextWindowInfo = timingCoordinator.getTimeUntilNextDecodeWindow()
@@ -292,6 +297,71 @@ class WSPRStation(
         // Phase 2: Collect audio for the required duration
         _stationState.value = WSPRStationState.CollectingAudio
         val audioCollectionStartTime = System.currentTimeMillis()
+
+        while (System.currentTimeMillis() - audioCollectionStartTime < AUDIO_COLLECTION_DURATION_MILLISECONDS)
+        {
+            val audioChunk = audioSource.readAudioChunk(AUDIO_CHUNK_DURATION_MILLISECONDS)
+            signalProcessor.addSamples(audioChunk)
+
+            // Brief pause to prevent excessive CPU usage
+            delay(AUDIO_COLLECTION_PAUSE_MILLISECONDS)
+        }
+
+        // Phase 3: Process collected audio through WSPR decoder
+        _stationState.value = WSPRStationState.ProcessingAudio
+
+        val nativeDecodeResults = signalProcessor.decodeBufferedWSPR(
+            dialFrequencyMHz = configuration.operatingFrequencyMHz,
+            useLowerSideband = configuration.useLowerSidebandMode,
+            useTimeAlignment = configuration.useTimeAlignedDecoding
+        )
+
+        // Phase 4: Convert and store results
+        val processedResults = convertNativeResultsToApplicationFormat(nativeDecodeResults)
+        _decodeResults.value = processedResults
+
+        return processedResults
+    }
+
+    /**
+     * Converts native WSPR decoder results to application-friendly format.
+     *
+     * The native decoder returns WSPRMessage objects with specific field formats.
+     * This method normalizes the data and adds application specific metadata.
+     *
+     * @param nativeResults Raw results from the native WSPR decoder
+     * @return List of processed decode results with consistent formatting
+     */
+    private fun convertNativeResultsToApplicationFormat(nativeResults: Array<WSPRMessage>?): List<WSPRDecodeResult>
+    {
+        if (nativeResults == null) return emptyList()
+
+        return nativeResults.map { nativeMessage ->
+            WSPRDecodeResult(
+                callsign = nativeMessage.call?.trim() ?: WSPRDecodeResult.UNKNOWN_CALLSIGN,
+                gridSquare = nativeMessage.loc?.trim() ?: WSPRDecodeResult.UNKNOWN_GRID_SQUARE,
+                powerLevelDbm = nativeMessage.power,
+                signalToNoiseRatioDb = nativeMessage.snr,
+                frequencyOffsetHz = nativeMessage.freq,
+                completeMessage = nativeMessage.message?.trim() ?: WSPRDecodeResult.EMPTY_MESSAGE,
+                decodeTimestamp = System.currentTimeMillis()
+            )
+        }
+    }
+
+    /**
+     * Starts background updates for cycle information display.
+     * Updates cycle position and timing information every second for UI consumption.
+     */
+    private fun startCycleInformationUpdates()
+    {
+        CoroutineScope(Dispatchers.IO).launch {
+            while (stationOperationJob?.isActive == true)
+            {
+                _cycleInformation.value = timingCoordinator.getCurrentCycleInformation()
+                delay(CYCLE_INFORMATION_UPDATE_INTERVAL_MILLISECONDS)
+            }
+        }
     }
 
 }
