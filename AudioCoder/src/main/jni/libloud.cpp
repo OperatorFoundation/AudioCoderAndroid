@@ -47,11 +47,18 @@ Java_org_operatorfoundation_audiocoder_CJarInterface_WSPREncodeToPCM
                         WSPR_SYMBOL_COUNT * WSPR_SYMBOL_LENGTH);
 
     short volume = 16383;
+
     for (int i = 0; i < WSPR_SYMBOL_COUNT; i++) {
         if (lsb_mod) {
             symbols[i] = (uint8_t) 3 - symbols[i];
         }
+
+        // Base band Carrier Frequency - 1500 Hz
+        // Frequency spacing between the symbols - 1.4548
         double frequency = 1500 + ((int) j_offset) + symbols[i] * 1.4548;
+
+        // TODO: Create a new function that converts frequency (double) to ints ( * 100 + casting to UInt64) to Bytes and returns a byte array of the frequencies
+        // Frequency array size = # of symbols * 8 bytes (size of 64 bit integer)
         double theta = frequency * TAU / (double) 12000;
         // 'volume' is UInt16 with range 0 thru Uint16.MaxValue ( = 65 535)
         // we need 'amp' to have the range of 0 thru Int16.MaxValue ( = 32 767)
