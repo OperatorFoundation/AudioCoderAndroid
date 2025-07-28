@@ -10,6 +10,7 @@ import org.operatorfoundation.audiocoder.models.WSPRCycleInformation
 import org.operatorfoundation.audiocoder.models.WSPRDecodeResult
 import org.operatorfoundation.audiocoder.models.WSPRStationConfiguration
 import org.operatorfoundation.audiocoder.models.WSPRStationState
+import timber.log.Timber
 import java.util.*
 
 /**
@@ -238,7 +239,11 @@ class WSPRStation(
         {
             try
             {
+                Timber.d("=== WSPR Station Loop Iteration ===")
                 val nextDecodeWindowInfo = timingCoordinator.getTimeUntilNextDecodeWindow()
+                Timber.d("Next decode window: ${nextDecodeWindowInfo.secondsUntilWindow}s")
+                Timber.d("Is currently in decode window: ${timingCoordinator.isCurrentlyInValidDecodeWindow()}")
+
                 val millisecondsUntilDecodeWindow = nextDecodeWindowInfo.millisecondsUntilWindow
 
                 if (millisecondsUntilDecodeWindow > 0)

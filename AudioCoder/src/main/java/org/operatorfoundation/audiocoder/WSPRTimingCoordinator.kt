@@ -9,6 +9,7 @@ import org.operatorfoundation.audiocoder.WSPRTimingConstants.MINUTES_PER_WSPR_CY
 import org.operatorfoundation.audiocoder.WSPRTimingConstants.SECONDS_PER_MINUTE
 import org.operatorfoundation.audiocoder.models.WSPRCycleInformation
 import org.operatorfoundation.audiocoder.models.WSPRDecodeWindowInformation
+import timber.log.Timber
 
 /**
  * Manages WSPR protocol timing and synchronization with the global amateur radio schedule.
@@ -117,7 +118,14 @@ class WSPRTimingCoordinator
         val isPastDecodeStartDelay = (cyclePositionSeconds >= DECODE_START_DELAY_SECONDS)
         val isBeforeDecodeWindowEnd = (cyclePositionSeconds <= DECODE_WINDOW_END_SECOND)
 
-        return isEvenMinute && isPastDecodeStartDelay && isBeforeDecodeWindowEnd
+        val result = isEvenMinute && isPastDecodeStartDelay && isBeforeDecodeWindowEnd
+
+        // Add this logging
+        Timber.v("Decode window check: minute=$currentMinuteInHour, second=$currentSecondInMinute, " +
+                "isEven=$isEvenMinute, cyclePos=$cyclePositionSeconds, " +
+                "pastDelay=$isPastDecodeStartDelay, beforeEnd=$isBeforeDecodeWindowEnd, result=$result")
+
+        return result
     }
 
     /**
