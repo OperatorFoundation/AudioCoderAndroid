@@ -3,6 +3,7 @@ package org.operatorfoundation.audiocoder
 import org.operatorfoundation.audiocoder.WSPRBandplan.getDefaultFrequency
 import org.operatorfoundation.audiocoder.WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE
 import org.operatorfoundation.audiocoder.WSPRConstants.SYMBOLS_PER_MESSAGE
+import timber.log.Timber
 
 /**
  * High-level WSPR audio processing with buffering and multiple decode strategies.
@@ -215,13 +216,13 @@ class WSPRProcessor
 
                 messages?.let {
                     allMessages.addAll(it.toList())
-                    // Timber.d("Decoded ${it.size} messages from ${window.description}")
+                     Timber.d("Decoded ${it.size} messages from ${window.description}")
                 }
             }
             catch (exception: Exception)
             {
                 // Log decode failure but continue with other windows
-                // Timber.w(exception, "Failed to decode ${window.description}")
+                 Timber.w(exception, "Failed to decode ${window.description}")
             }
         }
 
