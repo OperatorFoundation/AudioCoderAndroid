@@ -6,6 +6,19 @@ public class CJarInterface {
         System.loadLibrary("QuietScream");
     }
 
+    /**
+     * Encodes WSPR messages into frequency data for direct radio hardware control.
+     *
+     * @param callsign Amateur radio callsign
+     * @param locator Maidenhead grid square locator
+     * @param power Power level in dBm (0-60)
+     * @param offset Frequency offset in Hz (added to 1500 Hz base)
+     * @param lsb LSB mode - inverts symbol order if true
+     * @return byte array containing 162 frequencies as 64-bit integers (freq * 100)
+     *          Array size: 1,296 bytes (162 symbols × 8 bytes each)
+     */
+    public static native byte[] WSPREncodeToFrequencies(String callsign, String locator, int power, int offset, boolean lsb);
+
     public static native byte[] WSPREncodeToPCM(String callsign, String locator, int power, int offset, boolean lsb);
 
     public static native WSPRMessage[] WSPRDecodeFromPcm(byte[] sound, double dialfreq, boolean lsb);

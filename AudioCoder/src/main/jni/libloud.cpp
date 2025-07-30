@@ -57,7 +57,7 @@ Java_org_operatorfoundation_audiocoder_CJarInterface_WSPREncodeToPCM
         // Frequency spacing between the symbols - 1.4548
         double frequency = 1500 + ((int) j_offset) + symbols[i] * 1.4548;
 
-        // TODO: Create a new function that converts frequency (double) to ints ( * 100 + casting to UInt64) to Bytes and returns a byte array of the frequencies
+        // TODO: Create a new version of this function that converts frequency (double) to ints ( * 100 + casting to UInt64) to Bytes and returns a byte array of the frequencies
         // Frequency array size = # of symbols * 8 bytes (size of 64 bit integer)
         double theta = frequency * TAU / (double) 12000;
         // 'volume' is UInt16 with range 0 thru Uint16.MaxValue ( = 65 535)
@@ -79,6 +79,116 @@ Java_org_operatorfoundation_audiocoder_CJarInterface_WSPREncodeToPCM
     free(sound);// is it work?
     return ret;
 }
+
+/**
+ * WSPR Frequency Encoder
+ *
+ * Encodes WSPR message into an array of frequencies that can be sent directly to custom radio hardware.
+ *
+ * @param env JNI environment pointer
+ * @param cls Java class reference
+ * @param j_calls Callsign string
+ * @param j_local Grid square locator
+ * @param j_powr Power level in dbm (0-60)
+ * @param j_offset Frequency offset in Hz (added to base 1500 Hz)
+ * @param lsb_mode LSB mode flag - inverts symbol order if true
+ *
+ * @return jbyteArray containing 162 frequencies as 64-bit integers (* 100)
+ *          Total array size: 162 symbols * 8 bytes = 1,296 bytes
+ *          Each frequency is stored as big-endien 64-bit integer with 0.01 Hz precision
+ */
+ extern "C" JNIEXPORT jbyteArray
+ JNICALL
+ Java_org_operatorfoundation_audiocoder_CJarInterface_WSPREncodeToFrequencies(JNIEnv *env, jclass cls, jstring j_calls, jstring j_local, jint j_powr, jint j_offset, jboolean lsb_mode) {
+     // Array to hold the 162 WSPR symbols (0-3 values representing frequency shifts)
+     uint8_t symbols[WSPR_SYMBOL_COUNT];
+
+     // Convert Java strings to C strings
+     const char *callsign = env->GetStringUTFChars(j_calls, 0);
+     const char *loca = env->GetStringUTFChars(j_local, 0);
+
+     // Format power as 2-digit string (required by encoder)
+     char  powr[3];
+     snprintf(powr, 3, "%02d", (int) j_powr);
+
+     __android_log_print(ANDROID_LOG_INFO,
+                         APPNAME,
+                         "WSPR Frequency Encode: %s %s %s", callsign, loca, powr);
+
+     // Encode WSPR message into symbol array
+     int encode_result = LB_WSPR_Encode2symbolz(symbols, callsign, loca, powr);
+     __android_log_print(ANDROID_LOG_INFO,
+                         APPNAME,
+                         "WSPR encode result: %d", encode_result);
+
+     // Release Java string references
+     env->ReleaseStringUTFChars(j_calls, callsign);
+     env->ReleaseStringUTFChars(j_local, loca);
+
+     // Allocate array for frequency data (162 frequencies x 8 bytes each)
+     const int FREQUENCY_ARRAY_SIZE = WSPR_SYMBOL_COUNT * sizeof(int64_t);
+     int64_t *frequencies = (int64_t *) malloc(FREQUENCY_ARRAY_SIZE);
+
+     if (frequencies == NULL)
+     {
+         __android_log_print(ANDROID_LOG_ERROR,
+                             APPNAME,
+                             "Failed to allocate frequency array");
+         return NULL;
+     }
+
+     // Convert each symbol to its corresponding frequency
+     for (int i = 0; i < WSPR_SYMBOL_COUNT; i++)
+     {
+         uint8_t symbol = symbols[i];
+
+         // Apply LSB mode inversion if requested
+         if (lsb_mode)
+         {
+             symbol = (uint8_t) (3 - symbol);
+         }
+
+         // Calculate the frequency for this symbol.
+         // Base frequency: 1500 Hz
+         // User offset: j_offset Hz
+         // Symbol spacing: 1.4648 Hz between tones (WSPR standard)
+         double frequency_hz = 1500.0 + ((double) j_offset) + (symbol * 1.4648);
+
+         // Convert to 64-bit signed integer with 0.01 Hz precision (multiply by 100)
+         frequencies[i] = (int64_t) (frequency_hz * 100.0);
+
+         // Debug: Log the first few frequencies
+         if (i < 5)
+         {
+             __android_log_print(ANDROID_LOG_DEBUG,
+                                 APPNAME,
+                                 "Symbol[%d] = %d, Frequency = %.4f Hz, Encoded = %lld", i, symbol, frequency_hz, (long long)frequencies[i]);
+         }
+     }
+
+     jbyteArray result = env->NewByteArray(FREQUENCY_ARRAY_SIZE);
+     if (result == NULL)
+     {
+         __android_log_print(ANDROID_LOG_ERROR,
+                             APPNAME,
+                             "Failed to create Java byte array for WSPR encoding.");
+         free(frequencies);
+         return NULL;
+     }
+
+     // Copy frequency data to Java byte array
+     env->SetByteArrayRegion(result, 0, FREQUENCY_ARRAY_SIZE, (jbyte *) frequencies);
+
+     // Don't forget to clean up after yourself!
+     free(frequencies);
+
+     __android_log_print(ANDROID_LOG_INFO, APPNAME,
+                         "WSPR frequency encoding complete: %d frequencies, %d bytes",
+                         WSPR_SYMBOL_COUNT, FREQUENCY_ARRAY_SIZE);
+
+     return result;
+ }
+
 
 
 extern "C"
