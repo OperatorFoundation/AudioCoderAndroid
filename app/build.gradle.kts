@@ -10,8 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "org.operatorfoundation.audiocoderandroid"
-        minSdk = 26
-        targetSdk = 35
+        minSdk = 33
         versionCode = 1
         versionName = "1.0"
 
