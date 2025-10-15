@@ -93,11 +93,10 @@ Java_org_operatorfoundation_audiocoder_CJarInterface_WSPREncodeToPCM
  * @param j_offset Frequency offset in Hz (added to base 1500 Hz)
  * @param lsb_mode LSB mode flag - inverts symbol order if true
  *
- * @return jbyteArray containing 162 frequencies as 64-bit integers (* 100)
- *          Total array size: 162 symbols * 8 bytes = 1,296 bytes
- *          Each frequency is stored as big-endien 64-bit integer with 0.01 Hz precision
+ * @return jlongArray containing 162 frequencies as 64-bit integers (* 100)
+ *          Each frequency has 0.01 Hz precision
  */
- extern "C" JNIEXPORT jbyteArray
+ extern "C" JNIEXPORT jlongArray
  JNICALL
  Java_org_operatorfoundation_audiocoder_CJarInterface_WSPREncodeToFrequencies(JNIEnv *env, jclass cls, jstring j_calls, jstring j_local, jint j_powr, jint j_offset, jboolean lsb_mode) {
      // Array to hold the 162 WSPR symbols (0-3 values representing frequency shifts)
@@ -125,9 +124,7 @@ Java_org_operatorfoundation_audiocoder_CJarInterface_WSPREncodeToPCM
      env->ReleaseStringUTFChars(j_calls, callsign);
      env->ReleaseStringUTFChars(j_local, loca);
 
-     // Allocate array for frequency data (162 frequencies x 8 bytes each)
-     const int FREQUENCY_ARRAY_SIZE = WSPR_SYMBOL_COUNT * sizeof(int64_t);
-     int64_t *frequencies = (int64_t *) malloc(FREQUENCY_ARRAY_SIZE);
+     int64_t *frequencies = (int64_t *) malloc(WSPR_SYMBOL_COUNT * sizeof(int64_t));
 
      if (frequencies == NULL)
      {
@@ -166,25 +163,25 @@ Java_org_operatorfoundation_audiocoder_CJarInterface_WSPREncodeToPCM
          }
      }
 
-     jbyteArray result = env->NewByteArray(FREQUENCY_ARRAY_SIZE);
+     jlongArray result = env->NewLongArray(WSPR_SYMBOL_COUNT);
      if (result == NULL)
      {
          __android_log_print(ANDROID_LOG_ERROR,
                              APPNAME,
-                             "Failed to create Java byte array for WSPR encoding.");
+                             "Failed to create Java long array for WSPR encoding.");
          free(frequencies);
          return NULL;
      }
 
-     // Copy frequency data to Java byte array
-     env->SetByteArrayRegion(result, 0, FREQUENCY_ARRAY_SIZE, (jbyte *) frequencies);
+     // Copy frequency data to Java long array
+     env->SetLongArrayRegion(result, 0, WSPR_SYMBOL_COUNT, (jlong *) frequencies);
 
      // Don't forget to clean up after yourself!
      free(frequencies);
 
      __android_log_print(ANDROID_LOG_INFO, APPNAME,
-                         "WSPR frequency encoding complete: %d frequencies, %d bytes",
-                         WSPR_SYMBOL_COUNT, FREQUENCY_ARRAY_SIZE);
+                         "WSPR frequency encoding complete: %d frequencies",
+                         WSPR_SYMBOL_COUNT);
 
      return result;
  }

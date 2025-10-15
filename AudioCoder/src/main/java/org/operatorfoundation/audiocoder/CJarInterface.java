@@ -14,10 +14,9 @@ public class CJarInterface {
      * @param power Power level in dBm (0-60)
      * @param offset Frequency offset in Hz (added to 1500 Hz base)
      * @param lsb LSB mode - inverts symbol order if true
-     * @return byte array containing 162 frequencies as 64-bit integers (freq * 100)
-     *          Array size: 1,296 bytes (162 symbols × 8 bytes each)
+     * @return long array containing 162 frequencies (Hz * 100 for 0.01 Hz precision)
      */
-    public static native byte[] WSPREncodeToFrequencies(String callsign, String locator, int power, int offset, boolean lsb);
+    public static native long[] WSPREncodeToFrequencies(String callsign, String locator, int power, int offset, boolean lsb);
 
     public static native byte[] WSPREncodeToPCM(String callsign, String locator, int power, int offset, boolean lsb);
 
