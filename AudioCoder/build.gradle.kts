@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "org.operatorfoundation.audiocoder"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 33
