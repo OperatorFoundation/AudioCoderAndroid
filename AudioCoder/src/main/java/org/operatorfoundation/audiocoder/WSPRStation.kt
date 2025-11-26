@@ -302,15 +302,16 @@ class WSPRStation(
         // Phase 2: Collect audio for the required duration
         _stationState.value = WSPRStationState.CollectingAudio
         val audioCollectionStartTime = System.currentTimeMillis()
+        var totalSamplesCollected = 0
 
         while (System.currentTimeMillis() - audioCollectionStartTime < AUDIO_COLLECTION_DURATION_MILLISECONDS)
         {
             val audioChunk = audioSource.readAudioChunk(AUDIO_CHUNK_DURATION_MILLISECONDS)
             signalProcessor.addSamples(audioChunk)
-
-            // Brief pause to prevent excessive CPU usage
-            delay(AUDIO_COLLECTION_PAUSE_MILLISECONDS)
+            totalSamplesCollected += audioChunk.size
         }
+
+        Timber.d("Audio collection complete: ${totalSamplesCollected} samples in ${System.currentTimeMillis() - audioCollectionStartTime}ms")
 
         // Phase 3: Process collected audio through WSPR decoder
         _stationState.value = WSPRStationState.ProcessingAudio

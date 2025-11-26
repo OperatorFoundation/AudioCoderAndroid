@@ -205,6 +205,10 @@ class WSPRProcessor
     {
         val allMessages = mutableListOf<WSPRMessage>()
 
+        Timber.d("=== Starting decode with ${windows.size} windows ===")
+        Timber.d("Buffer has ${audioBuffer.size} samples (${getBufferDurationSeconds()}s)")
+        Timber.d("Required: ${REQUIRED_DECODE_SAMPLES} samples (${REQUIRED_DECODE_SECONDS}s)")
+
         for (window in windows)
         {
             try
@@ -212,19 +216,29 @@ class WSPRProcessor
                 val windowSamples = audioBuffer.subList(window.startIndex, window.endIndex).toShortArray()
                 val audioBytes = convertShortsToBytes(windowSamples)
 
+                Timber.d("Calling native decoder:")
+                Timber.d("  Window: ${window.description}")
+                Timber.d("  Samples: ${windowSamples.size} (${windowSamples.size / WSPR_REQUIRED_SAMPLE_RATE}s)")
+                Timber.d("  Bytes: ${audioBytes.size}")
+                Timber.d("  Frequency: ${dialFrequencyMHz} MHz")
+                Timber.d("  LSB: $useLowerSideband")
+
                 val messages = CJarInterface.WSPRDecodeFromPcm(audioBytes, dialFrequencyMHz, useLowerSideband)
+
+                Timber.d("Native decoder returned: ${messages?.size ?: "null"} messages")
 
                 messages?.let {
                     allMessages.addAll(it.toList())
-                     Timber.d("Decoded ${it.size} messages from ${window.description}")
+                    Timber.d("Decoded ${it.size} messages from ${window.description}")
                 }
             }
             catch (exception: Exception)
             {
-                // Log decode failure but continue with other windows
-                 Timber.w(exception, "Failed to decode ${window.description}")
+                Timber.e(exception, "Failed to decode ${window.description}")
             }
         }
+
+        Timber.d("=== Decode complete: ${allMessages.size} total messages ===")
 
         return if (allMessages.isNotEmpty())
         {
