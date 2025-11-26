@@ -4,6 +4,7 @@ import org.operatorfoundation.audiocoder.WSPRBandplan.getDefaultFrequency
 import org.operatorfoundation.audiocoder.WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE
 import org.operatorfoundation.audiocoder.WSPRConstants.SYMBOLS_PER_MESSAGE
 import timber.log.Timber
+import kotlin.math.pow
 
 /**
  * High-level WSPR audio processing with buffering and multiple decode strategies.
@@ -223,6 +224,9 @@ class WSPRProcessor
                 Timber.d("  Frequency: ${dialFrequencyMHz} MHz")
                 Timber.d("  LSB: $useLowerSideband")
 
+                val audioQuality = analyzeAudioQuality(windowSamples)
+                Timber.d("  Audio quality: $audioQuality")
+
                 val messages = CJarInterface.WSPRDecodeFromPcm(audioBytes, dialFrequencyMHz, useLowerSideband)
 
                 Timber.d("Native decoder returned: ${messages?.size ?: "null"} messages")
@@ -261,6 +265,14 @@ class WSPRProcessor
 
             "${callsign}_${location}_${power}_${snr}"
         }
+    }
+
+    private fun analyzeAudioQuality(samples: ShortArray): String
+    {
+        val rms = kotlin.math.sqrt(samples.map { (it.toFloat() / Short.MAX_VALUE).pow(2) }.average())
+        val peakSample = samples.maxOfOrNull { kotlin.math.abs(it.toInt()) } ?: 0
+        val peak = peakSample.toFloat() / Short.MAX_VALUE
+        return "RMS=%.3f, Peak=%.3f".format(rms, peak)
     }
 
     /**
