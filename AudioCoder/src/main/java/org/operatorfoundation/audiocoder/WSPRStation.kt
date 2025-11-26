@@ -316,11 +316,20 @@ class WSPRStation(
         // Phase 3: Process collected audio through WSPR decoder
         _stationState.value = WSPRStationState.ProcessingAudio
 
+        Timber.d("=== PRE-DECODE CHECK ===")
+        Timber.d("Buffer ready: ${signalProcessor.isReadyForDecode()}")
+        Timber.d("Buffer samples: ${signalProcessor.audioBuffer.size}")
+        Timber.d("Buffer duration: ${signalProcessor.getBufferDurationSeconds()}s")
+        Timber.d("Required samples: ${signalProcessor.getRequiredDecodeSamples()}")
+        Timber.d("Config: freq=${configuration.operatingFrequencyMHz}, lsb=${configuration.useLowerSidebandMode}")
+
         val nativeDecodeResults = signalProcessor.decodeBufferedWSPR(
             dialFrequencyMHz = configuration.operatingFrequencyMHz,
             useLowerSideband = configuration.useLowerSidebandMode,
             useTimeAlignment = configuration.useTimeAlignedDecoding
         )
+
+        Timber.d("Native decode returned: ${nativeDecodeResults?.size ?: "null"}")
 
         // Phase 4: Convert and store results
         val processedResults = convertNativeResultsToApplicationFormat(nativeDecodeResults)
