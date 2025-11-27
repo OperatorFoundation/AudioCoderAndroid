@@ -176,27 +176,26 @@ class WSPRProcessor
      */
     private fun generateTimeAlignedWindows(): List<DecodeWindow>
     {
-        val windows = mutableListOf<DecodeWindow>()
-        val cycleSamples = (WSPR_REQUIRED_SAMPLE_RATE * WSPR_CYCLE_DURATION_SECONDS).toInt()
-        val availableCycles = audioBuffer.size / cycleSamples
-        val maxCycles = minOf(availableCycles, MAX_DECODE_WINDOWS)
-
-        for (cycle in 0 until maxCycles)
+        // Check if we have enough audio for at least one decode
+        if (audioBuffer.size < REQUIRED_DECODE_SAMPLES)
         {
-            val startIndex = cycle * cycleSamples
-            val endIndex = minOf(startIndex + REQUIRED_DECODE_SAMPLES, audioBuffer.size)
-
-            // Ensure we have enough data to decode
-            val windowDurationSeconds = (endIndex - startIndex.toFloat()) / WSPR_REQUIRED_SAMPLE_RATE
-            if (windowDurationSeconds >= WSPR_TRANSMISSION_DURATION_SECONDS)
-            {
-                windows.add(DecodeWindow(
-                    startIndex,
-                    endIndex,
-                    description = "Time-aligned cycle ${cycle + 1} (${startIndex / WSPR_REQUIRED_SAMPLE_RATE}s-${endIndex / WSPR_REQUIRED_SAMPLE_RATE}s)"
-                ))
-            }
+            Timber.w("Insufficient audio for time-aligned decode: ${audioBuffer.size} samples < ${REQUIRED_DECODE_SAMPLES} required")
+            return emptyList()
         }
+
+        val windows = mutableListOf<DecodeWindow>()
+
+        // Create a single window from the start of the buffer
+        // This is already time-aligned because collection starts at even_minute + 2s
+        val endIndex = minOf(REQUIRED_DECODE_SAMPLES, audioBuffer.size)
+
+        windows.add(DecodeWindow(
+            startIndex = 0,
+            endIndex = endIndex,
+            description = "Time-aligned window (0s-${endIndex / WSPR_REQUIRED_SAMPLE_RATE}s)"
+        ))
+
+        Timber.d("Generated time-aligned window: 0-${endIndex} samples (${endIndex / WSPR_REQUIRED_SAMPLE_RATE}s)")
 
         return windows
     }
