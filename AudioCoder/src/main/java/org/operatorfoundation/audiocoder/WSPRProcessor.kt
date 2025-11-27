@@ -135,7 +135,14 @@ class WSPRProcessor
      */
     private fun generateSlidingWindows(): List<DecodeWindow>
     {
-        // Single window if buffer fits within decoder limits
+        // Check if we have enough audio
+        if (audioBuffer.size < REQUIRED_DECODE_SAMPLES)
+        {
+            Timber.w("Insufficient audio for decode: ${audioBuffer.size} samples < ${REQUIRED_DECODE_SAMPLES} required")
+            return emptyList()
+        }
+
+        // Single window if buffer fits exactly within decoder limits
         if (audioBuffer.size <= REQUIRED_DECODE_SAMPLES)
         {
             return listOf(DecodeWindow(0, audioBuffer.size, "Full buffer"))

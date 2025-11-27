@@ -34,7 +34,7 @@ data class WSPRStationConfiguration(
             return WSPRStationConfiguration(
                 operatingFrequencyMHz = WSPRBandplan.getDefaultFrequency(),
                 useLowerSidebandMode = false,
-                useTimeAlignedDecoding = true,
+                useTimeAlignedDecoding = false,
                 stationCallsign = null,
                 stationGridSquare = null
             )
