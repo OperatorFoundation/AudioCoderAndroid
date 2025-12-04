@@ -288,11 +288,6 @@ public class WSPRMessage {
 }
 ```
 
-#### Database Classes
-- `DBHelper`: SQLite database management for WSPR contacts
-- `WSPRNetSender`: Upload decoded spots to WSPRNet
-- `Bandplan`: Ham radio band plan definitions
-
 ## Technical Specifications
 
 - **Audio Format**: 16-bit PCM, 12 kHz sample rate
