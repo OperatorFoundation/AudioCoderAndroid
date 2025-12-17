@@ -309,6 +309,7 @@ class WSPRStation(
             val audioChunk = audioSource.readAudioChunk(AUDIO_CHUNK_DURATION_MILLISECONDS)
             signalProcessor.addSamples(audioChunk)
             totalSamplesCollected += audioChunk.size
+            delay(AUDIO_COLLECTION_PAUSE_MILLISECONDS)
         }
 
         Timber.d("Audio collection complete: ${totalSamplesCollected} samples in ${System.currentTimeMillis() - audioCollectionStartTime}ms")
