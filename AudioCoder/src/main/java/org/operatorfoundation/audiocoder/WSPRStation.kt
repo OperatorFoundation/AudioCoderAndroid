@@ -295,6 +295,8 @@ class WSPRStation(
      */
     private suspend fun performCompleteDecodeSequence(): List<WSPRDecodeResult>
     {
+        Timber.d(">>> DECODE SEQUENCE STARTING <<<")
+
         // Phase 1: Prepare for audio collection
         _stationState.value = WSPRStationState.PreparingForCollection
         signalProcessor.clearBuffer()
@@ -309,10 +311,11 @@ class WSPRStation(
             val audioChunk = audioSource.readAudioChunk(AUDIO_CHUNK_DURATION_MILLISECONDS)
             signalProcessor.addSamples(audioChunk)
             totalSamplesCollected += audioChunk.size
+
             delay(AUDIO_COLLECTION_PAUSE_MILLISECONDS)
         }
 
-        Timber.d("Audio collection complete: ${totalSamplesCollected} samples in ${System.currentTimeMillis() - audioCollectionStartTime}ms")
+        Timber.d(">>> COLLECTION DONE: ${totalSamplesCollected} samples in ${System.currentTimeMillis() - audioCollectionStartTime}ms")
 
         // Phase 3: Process collected audio through WSPR decoder
         _stationState.value = WSPRStationState.ProcessingAudio
@@ -351,6 +354,10 @@ class WSPRStation(
     private fun convertNativeResultsToApplicationFormat(nativeResults: Array<WSPRMessage>?): List<WSPRDecodeResult>
     {
         if (nativeResults == null) return emptyList()
+
+        nativeResults.forEach { msg ->
+            Timber.d("NATIVE-RAW: call='${msg.call}', loc='${msg.loc}', power=${msg.power}, snr=${msg.snr}, message='${msg.message}'")
+        }
 
         return nativeResults.map { nativeMessage ->
             WSPRDecodeResult(
