@@ -816,6 +816,34 @@ ReadWavFileEx(unsigned char *soundarr, int sarlen, int ntrmin, float *idat, floa
 }
 
 
+/**
+ * jani_do_process - Main WSPR decoding function called from Java via JNI
+ *
+ * This function takes raw PCM audio data and decodes any WSPR messages present.
+ * It performs FFT analysis, candidate detection, sync refinement, and Fano/Jelinek
+ * decoding to extract callsign, grid square, and power from WSPR transmissions.
+ *
+ * @param env         JNI environment pointer for Java interop
+ * @param clazz       Java class reference (unused but required by JNI)
+ * @param soundarr    Raw PCM audio data as unsigned char array (16-bit samples, little-endian)
+ * @param sarlen      Length of soundarr in bytes
+ * @param jdialfreq   Dial frequency in MHz (e.g., 14.0956 for 20m WSPR)
+ * @param lsb_mode    If true, inverts symbol order for lower sideband reception
+ *
+ * @return jobjectArray of WSPRMessage objects containing decoded messages,
+ *         or empty array if no messages decoded
+ *
+ * Audio Requirements:
+ *   - Sample rate: 12000 Hz (12 kHz)
+ *   - Channels: 1 (mono)
+ *   - Bit depth: 16-bit signed
+ *   - Duration: 114 seconds (1,368,000 samples = 2,736,000 bytes)
+ *
+ * WSPR Protocol Notes:
+ *   - Each WSPR transmission is ~110.6 seconds long
+ *   - Messages contain: callsign (up to 6 chars), grid (4 chars), power (0-60 dBm)
+ *   - Signal bandwidth is ~6 Hz, centered around 1500 Hz audio frequency
+ */
 jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
                              unsigned char *soundarr, int sarlen, double jdialfreq,
                              jboolean lsb_mode) {
@@ -853,6 +881,11 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
     float tfano = 0.0, treadwav = 0.0, tcandidates = 0.0, tsync0 = 0.0;
     float tsync1 = 0.0, tsync2 = 0.0, ttotal = 0.0;
 
+    /*
+     * Structure to hold decoded WSPR message results.
+     * Each successful decode populates one of these with timing,
+     * frequency, SNR, and the decoded message content.
+     */
     struct result {
         char date[7];
         char time[5];
@@ -860,7 +893,7 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
         float snr;
         float dt;
         double freq;
-        char message[23];
+        char message[23];  // Contains "CALLSIGN GRID POWER"
         float drift;
         unsigned int cycles;
         int jitter;
@@ -868,11 +901,14 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
         unsigned int metric;
         unsigned char osd_decode;
     };
-    struct result decodes[50];
+    struct result decodes[50];  // Max 50 unique decodes per processing run
 
+    // Hash table for callsign lookup (used for Type 2/3 messages with hashed calls)
     char *hashtab;
     hashtab = calloc(32768 * 13, sizeof(char));
     int nh;
+
+    // Allocate working buffers for the decoder
     symbols = calloc(nbits * 2, sizeof(unsigned char));
     apmask = calloc(WSPR_NUMSYMBOLS, sizeof(unsigned char));
     cw = calloc(WSPR_NUMSYMBOLS, sizeof(unsigned char));
@@ -880,6 +916,8 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
     channel_symbols = calloc(nbits * 2, sizeof(unsigned char));
     callsign = calloc(13, sizeof(char));
     call_loc_pow = calloc(23, sizeof(char));
+
+    // Track unique decodes to prevent duplicates
     float allfreqs[100];
     char allcalls[100][13];
     for (i = 0; i < 100; i++) allfreqs[i] = 0.0;
@@ -887,43 +925,47 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
 
     int uniques = 0, noprint = 0, ndecodes_pass = 0;
 
-    // Parameters used for performance-tuning:
-    unsigned int maxcycles = 10000;            //Decoder timeout limit
-    float minsync1 = 0.10;                     //First sync limit
-    float minsync2 = 0.12;                     //Second sync limit
-    int iifac = 8;                             //Step size in final DT peakup
-    int symfac = 50;                           //Soft-symbol normalizing factor
-    int block_demod = 1;                       //Default is to use block demod on pass 2
-    int subtraction = 1;
-    int npasses = 2;
-    int ndepth = -1;                            //Depth for OSD
+    /*
+     * Decoder tuning parameters - these control the tradeoff between
+     * decode sensitivity and processing time.
+     */
+    unsigned int maxcycles = 10000;    // Fano decoder timeout limit
+    float minsync1 = 0.10;             // First sync threshold (coarse)
+    float minsync2 = 0.12;             // Second sync threshold (fine)
+    int iifac = 8;                     // Step size in final DT (time) refinement
+    int symfac = 50;                   // Soft-symbol normalizing factor
+    int block_demod = 1;               // Use block demodulation on pass 2
+    int subtraction = 1;               // Subtract decoded signals for multi-decode
+    int npasses = 2;                   // Number of decoding passes
+    int ndepth = -1;                   // OSD depth (disabled)
 
-    float minrms = 52.0 * (symfac / 64.0);      //Final test for plausible decoding
-    delta = 60;                                //Fano threshold step
-    float bias = 0.45;                        //Fano metric bias (used for both Fano and stack algorithms)
+    float minrms = 52.0 * (symfac / 64.0);  // Minimum RMS for plausible decode
+    delta = 60;                              // Fano threshold step
+    float bias = 0.45;                       // Fano metric bias
 
     t00 = clock();
     fftwf_complex *fftin, *fftout;
 
+    // Load metric tables for Fano decoder (included from separate file)
 #include "./metric_tables.c"
 
     int mettab[2][256];
 
+    // Allocate I/Q data buffers for FFT processing
     idat = calloc(maxpts, sizeof(float));
     qdat = calloc(maxpts, sizeof(float));
-
 
     if (stackdecoder) {
         stack = calloc(stacksize, sizeof(struct snode));
     }
 
-
-    // setup metric table
+    // Initialize metric table for Fano decoder
     for (i = 0; i < 256; i++) {
         mettab[0][i] = round(10 * (metric_tables[2][i] - bias));
         mettab[1][i] = round(10 * (metric_tables[2][255 - i] - bias));
     }
 
+    // Set up file paths (not used in Android JNI version, but kept for compatibility)
     FILE *fp_fftwf_wisdom_file, *fall_wspr, *fwsprd, *fhash, *ftimer;
     strcpy(wisdom_fname, ".");
     strcpy(all_fname, ".");
@@ -943,52 +985,38 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
     strncat(spots_fname, "/wspr_spots.txt", 20);
     strncat(timer_fname, "/wspr_timer.out", 20);
     strncat(hash_fname, "/hashtable.txt", 20);
-    /*if ((fp_fftwf_wisdom_file = fopen(wisdom_fname, "r"))) {  //Open FFTW wisdom
-        fftwf_import_wisdom_from_file(fp_fftwf_wisdom_file);
-        fclose(fp_fftwf_wisdom_file);
-    }*/
 
-    //fall_wspr = fopen(all_fname, "a");
-    //fwsprd = fopen(spots_fname, "w");
-    //  FILE *fdiag;
-    //  fdiag=fopen("wsprd_diag","a");
-
-    /*if ((ftimer = fopen(timer_fname, "r"))) {
-        //Accumulate timing data
-        fscanf(ftimer, "%f %f %f %f %f %f %f",
-               &treadwav, &tcandidates, &tsync0, &tsync1, &tsync2, &tfano, &ttotal);
-        fclose(ftimer);
-    }
-    ftimer = fopen(timer_fname, "w");*/
-
-    ///////////////////////// FILE READ
-
-    //ptr_to_infile_suffix = strstr(ptr_to_infile, ".wav");
-
-
-    t0 = clock();
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    /*
+     * Get reference to Java WSPRMessage class for creating return objects.
+     * This is done early so we can return an empty array on error.
+     */
     jclass cls = (*env)->FindClass(env, "org/operatorfoundation/audiocoder/WSPRMessage");
 
+    /*
+     * Read and process the audio data from the byte array.
+     * This performs initial FFT to convert to I/Q baseband representation.
+     */
+    t0 = clock();
     npoints = ReadWavFileEx(soundarr, sarlen, wspr_type, idat, qdat);
     treadwav += (float) (clock() - t0) / CLOCKS_PER_SEC;
 
+    // Return empty array if audio read failed
     if (npoints == 1) {
         return (*env)->NewObjectArray(env, 0, cls, 0);
     }
+
     dialfreq = dialfreq_cmdline - (dialfreq_error * 1.0e-06);
 
-    ///////////////////////// END FILEREAD
-
-    // Parse date and time from given filename
-    //strncpy(date, ptr_to_infile_suffix - 11, 6);
-    //strncpy(uttime, ptr_to_infile_suffix - 4, 4);
+    // Use placeholder date/time (not available in real-time decode)
     strncpy(date, "987654", 6);
     strncpy(uttime, "6543", 4);
     date[6] = '\0';
     uttime[4] = '\0';
 
-    // Do windowed ffts over 2 symbols, stepped by half symbols
+    /*
+     * Perform windowed FFTs over 2 symbols, stepped by half symbols.
+     * This creates the time-frequency power spectrum used for candidate detection.
+     */
     int nffts = 4 * floor(npoints / 512) - 1;
     fftin = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * 512);
     fftout = (fftwf_complex *) fftwf_malloc(sizeof(fftwf_complex) * 512);
@@ -996,24 +1024,17 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
 
     float ps[512][nffts];
     float w[512];
+
+    // Sine window for FFT (reduces spectral leakage)
     for (i = 0; i < 512; i++) {
         w[i] = sin(0.006147931 * i);
     }
 
-    /*if (usehashtable) {
-        char line[80], hcall[12];
-        if ((fhash = fopen(hash_fname, "r+"))) {
-            while (fgets(line, sizeof(line), fhash) != NULL) {
-                sscanf(line, "%d %s", &nh, hcall);
-                strcpy(hashtab + nh * 13, hcall);
-            }
-        } else {
-            fhash = fopen(hash_fname, "w+");
-        }
-        fclose(fhash);
-    }*/
-
-    //*************** main loop starts here *****************
+    /*
+     * Main decoding loop - runs multiple passes.
+     * Pass 0: Initial decode with standard parameters
+     * Pass 1: Re-decode with block demodulation after subtracting found signals
+     */
     for (ipass = 0; ipass < npasses; ipass++) {
         if (ipass == 0) {
             nblocksize = 1;
@@ -1022,17 +1043,18 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
         }
         if (ipass == 1) {
             if (block_demod == 1) {
-                nblocksize = 3;  // try all blocksizes up to 3
-                maxdrift = 0;    // no drift for smaller frequency estimator variance
+                nblocksize = 3;  // Try all blocksizes up to 3
+                maxdrift = 0;    // No drift for smaller frequency estimator variance
                 minsync2 = 0.10;
-            } else {           // if called with -B, revert to "classic" wspr params
+            } else {
                 nblocksize = 1;
                 maxdrift = 4;
                 minsync2 = 0.12;
             }
         }
-        ndecodes_pass = 0;   // still needed?
+        ndecodes_pass = 0;
 
+        // Compute windowed FFTs across the entire recording
         for (i = 0; i < nffts; i++) {
             for (j = 0; j < 512; j++) {
                 k = i * 128 + j;
@@ -1048,7 +1070,7 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
             }
         }
 
-        // Compute average spectrum
+        // Compute average power spectrum across all time windows
         for (i = 0; i < 512; i++) psavg[i] = 0.0;
         for (i = 0; i < nffts; i++) {
             for (j = 0; j < 512; j++) {
@@ -1056,7 +1078,7 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
             }
         }
 
-        // Smooth with 7-point window and limit spectrum to +/-150 Hz
+        // Smooth spectrum with 7-point window and limit to +/-150 Hz
         int window[7] = {1, 1, 1, 1, 1, 1, 1};
         float smspec[411];
         for (i = 0; i < 411; i++) {
@@ -1067,24 +1089,20 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
             }
         }
 
-        // Sort spectrum values, then pick off noise level as a percentile
+        // Estimate noise level as 30th percentile of spectrum
         float tmpsort[411];
         for (j = 0; j < 411; j++) {
             tmpsort[j] = smspec[j];
         }
         qsort(tmpsort, 411, sizeof(float), floatcomp);
-
-        // Noise level of spectrum is estimated as 123/411= 30'th percentile
         float noise_level = tmpsort[122];
 
-        /* Renormalize spectrum so that (large) peaks represent an estimate of snr.
-         * We know from experience that threshold snr is near -7dB in wspr bandwidth,
-         * corresponding to -7-26.3=-33.3dB in 2500 Hz bandwidth.
-         * The corresponding threshold is -42.3 dB in 2500 Hz bandwidth for WSPR-15. */
-
+        /*
+         * Normalize spectrum so peaks represent SNR estimate.
+         * Threshold SNR is about -7dB in WSPR bandwidth.
+         */
         float min_snr, snr_scaling_factor;
-//        min_snr = pow(10.0,-7.0/10.0); //this is min snr in wspr bw
-        min_snr = pow(10.0, -8.0 / 10.0); //this is min snr in wspr bw
+        min_snr = pow(10.0, -8.0 / 10.0);
         if (wspr_type == 2) {
             snr_scaling_factor = 26.3;
         } else {
@@ -1096,7 +1114,7 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
             continue;
         }
 
-        // Find all local maxima in smoothed spectrum.
+        // Initialize candidate arrays
         for (i = 0; i < 200; i++) {
             freq0[i] = 0.0;
             snr0[i] = 0.0;
@@ -1105,6 +1123,10 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
             sync0[i] = 0.0;
         }
 
+        /*
+         * Find candidate signals as local maxima in the smoothed spectrum.
+         * Each candidate is a potential WSPR transmission to decode.
+         */
         int npk = 0;
         unsigned char candidate;
         if (more_candidates) {
@@ -1129,11 +1151,9 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
             }
         }
 
-        // Compute corrected fmin, fmax, accounting for dial frequency error
-        fmin += dialfreq_error;    // dialfreq_error is in units of Hz
+        // Apply frequency range filter
+        fmin += dialfreq_error;
         fmax += dialfreq_error;
-
-        // Don't waste time on signals outside of the range [fmin,fmax].
         i = 0;
         for (j = 0; j < npk; j++) {
             if (freq0[j] >= fmin && freq0[j] <= fmax) {
@@ -1144,7 +1164,7 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
         }
         npk = i;
 
-        // bubble sort on snr, bringing freq along for the ride
+        // Sort candidates by SNR (strongest first)
         int pass;
         float tmp;
         for (pass = 1; pass <= npk - 1; pass++) {
@@ -1162,39 +1182,22 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
 
         t0 = clock();
 
-        /* Make coarse estimates of shift (DT), freq, and drift
-
-         * Look for time offsets up to +/- 8 symbols (about +/- 5.4 s) relative
-         to nominal start time, which is 2 seconds into the file
-
-         * Calculates shift relative to the beginning of the file
-
-         * Negative shifts mean that signal started before start of file
-
-         * The program prints DT = shift-2 s
-
-         * Shifts that cause sync vector to fall off of either end of the data
-         vector are accommodated by "partial decoding", such that missing
-         symbols produce a soft-decision symbol value of 128
-
-         * The frequency drift model is linear, deviation of +/- drift/2 over the
-         span of 162 symbols, with deviation equal to 0 at the center of the
-         signal vector.
+        /*
+         * Coarse estimation of time shift (DT), frequency, and drift for each candidate.
+         * This narrows down the search space before fine refinement.
          */
-
         int idrift, ifr, if0, ifd, k0;
         int kindex;
         float smax, ss, pow, p0, p1, p2, p3;
-        for (j = 0; j < npk; j++) {                              //For each candidate...
+        for (j = 0; j < npk; j++) {
             smax = -1e30;
             if0 = freq0[j] / df + 256;
-            for (ifr = if0 - 2; ifr <= if0 + 2; ifr++) {                      //Freq search
-                for (k0 = -10; k0 < 22; k0++) {                             //Time search
-                    for (idrift = -maxdrift; idrift <= maxdrift; idrift++) {  //Drift search
+            for (ifr = if0 - 2; ifr <= if0 + 2; ifr++) {
+                for (k0 = -10; k0 < 22; k0++) {
+                    for (idrift = -maxdrift; idrift <= maxdrift; idrift++) {
                         ss = 0.0;
                         pow = 0.0;
-                        for (k = 0; k <
-                                    WSPR_NUMSYMBOLS; k++) {                             //Sum over symbols
+                        for (k = 0; k < WSPR_NUMSYMBOLS; k++) {
                             ifd = ifr + ((float) k - 81.0) / 81.0 * ((float) idrift) / (2.0 * df);
                             kindex = k0 + 2 * k;
                             if (kindex < nffts) {
@@ -1213,7 +1216,7 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
                             }
                         }
                         sync1 = ss / pow;
-                        if (sync1 > smax) {                  //Save coarse parameters
+                        if (sync1 > smax) {
                             smax = sync1;
                             shift0[j] = 128 * (k0 + 1);
                             drift0[j] = idrift;
@@ -1227,20 +1230,9 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
         tcandidates += (float) (clock() - t0) / CLOCKS_PER_SEC;
 
         /*
-         Refine the estimates of freq, shift using sync as a metric.
-         Sync is calculated such that it is a float taking values in the range
-         [0.0,1.0].
-
-         Function sync_and_demodulate has three modes of operation
-         mode is the last argument:
-
-         0 = no frequency or drift search. find best time lag.
-         1 = no time lag or drift search. find best frequency.
-         2 = no frequency or time lag search. Calculate soft-decision
-         symbols using passed frequency and shift.
-
-         NB: best possibility for OpenMP may be here: several worker threads
-         could each work on one candidate at a time.
+         * Fine refinement and decoding for each candidate.
+         * Uses sync_and_demodulate() to refine frequency/time estimates,
+         * then attempts Fano or Jelinek decoding.
          */
         for (j = 0; j < npk; j++) {
             memset(symbols, 0, sizeof(char) * nbits * 2);
@@ -1252,7 +1244,7 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
             shift1 = shift0[j];
             sync1 = sync0[j];
 
-            // coarse-grid lag and freq search, then if sync>minsync1 continue
+            // Coarse grid search
             fstep = 0.0;
             ifmin = 0;
             ifmax = 0;
@@ -1271,8 +1263,8 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
             sync_and_demodulate(idat, qdat, npoints, symbols, &f1, ifmin, ifmax, fstep, &shift1,
                                 lagmin, lagmax, lagstep, &drift1, symfac, &sync1, 1);
 
+            // Refine drift estimate on first pass
             if (ipass == 0) {
-                // refine drift estimate
                 fstep = 0.0;
                 ifmin = 0;
                 ifmax = 0;
@@ -1295,9 +1287,8 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
             }
             tsync1 += (float) (clock() - t0) / CLOCKS_PER_SEC;
 
-            // fine-grid lag and freq search
+            // Fine grid search if coarse sync is good enough
             if (sync1 > minsync1) {
-
                 lagmin = shift1 - 32;
                 lagmax = shift1 + 32;
                 lagstep = 16;
@@ -1306,7 +1297,6 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
                                     lagmin, lagmax, lagstep, &drift1, symfac, &sync1, 0);
                 tsync0 += (float) (clock() - t0) / CLOCKS_PER_SEC;
 
-                // fine search over frequency
                 fstep = 0.05;
                 ifmin = -2;
                 ifmax = 2;
@@ -1326,22 +1316,26 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
             int osd_decode = 0;
             int ib = 1, blocksize;
             int n1, n2, n3, nadd, nu, ntype;
+
+            // Try different block sizes for demodulation
             while (ib <= nblocksize && not_decoded) {
                 blocksize = ib;
                 idt = 0;
                 ii = 0;
+
+                // Try different time jitter values
                 while (worth_a_try && not_decoded && idt <= (128 / iifac)) {
                     ii = (idt + 1) / 2;
                     if (idt % 2 == 1) ii = -ii;
                     ii = iifac * ii;
                     jittered_shift = shift1 + ii;
 
-                    // Use mode 2 to get soft-decision symbols
                     t0 = clock();
                     noncoherent_sequence_detection(idat, qdat, npoints, symbols, &f1,
                                                    &jittered_shift, &drift1, symfac, &blocksize);
                     tsync2 += (float) (clock() - t0) / CLOCKS_PER_SEC;
 
+                    // Calculate RMS of soft symbols
                     sq = 0.0;
                     for (i = 0; i < WSPR_NUMSYMBOLS; i++) {
                         y = (float) symbols[i] - 128.0;
@@ -1349,18 +1343,20 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
                     }
                     rms = sqrt(sq / (float) WSPR_NUMSYMBOLS);
 
+                    // Attempt decode if sync and RMS are good enough
                     if ((sync1 > minsync2) && (rms > minrms)) {
                         deinterleave(symbols);
 
+                        // Apply LSB mode inversion if requested
                         if (lsb_mode) {
                             for (i = 0; i < WSPR_NUMSYMBOLS; i++) {
                                 symbols[i] = (unsigned char) 4 - symbols[i];
                             }
                         }
 
-                        //TODO: try to implement LSB mode here!
                         t0 = clock();
 
+                        // Try Fano or Jelinek decoder
                         if (stackdecoder) {
                             not_decoded = jelinek(&metric, &cycles, decdata, symbols, nbits,
                                                   stacksize, stack, mettab, maxcycles);
@@ -1368,8 +1364,6 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
                             not_decoded = fano(&metric, &cycles, &maxnp, decdata, symbols, nbits,
                                                mettab, delta, maxcycles);
                         }
-
-
                     }
                     idt++;
                     if (quickmode) break;
@@ -1377,25 +1371,26 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
                 ib++;
             }
 
+            // Process successful decode
             if (worth_a_try && !not_decoded) {
                 ndecodes_pass++;
 
+                // Convert decoded data to signed bytes
                 for (i = 0; i < 11; i++) {
-
                     if (decdata[i] > 127) {
                         message[i] = decdata[i] - 256;
                     } else {
                         message[i] = decdata[i];
                     }
-
                 }
 
-                // Unpack the decoded message, update the hashtable, apply
-                // sanity checks on grid and power, and return
-                // call_loc_pow string and also callsign (for de-duping).
+                /*
+                 * Unpack the decoded message into human-readable format.
+                 * Returns call_loc_pow as "CALLSIGN GRID POWER" string.
+                 */
                 noprint = unpk_(message, hashtab, call_loc_pow, callsign);
 
-                // subtract even on last pass
+                // Subtract decoded signal for multi-signal decoding
                 if (subtraction && (ipass < npasses) && !noprint) {
                     if (get_wspr_channel_symbols(call_loc_pow, hashtab, channel_symbols)) {
                         subtract_signal2(idat, qdat, npoints, f1, shift1, drift1, channel_symbols);
@@ -1404,21 +1399,21 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
                     }
                 }
 
-                // Remove dupes (same callsign and freq within 3 Hz)
+                // Check for duplicate decodes (same callsign within 3 Hz)
                 int dupe = 0;
                 for (i = 0; i < uniques; i++) {
                     if (!strcmp(callsign, allcalls[i]) &&
                         (fabs(f1 - allfreqs[i]) < 3.0))
                         dupe = 1;
                 }
+
+                // Store unique decode
                 if ((verbose || !dupe) && !noprint) {
                     strcpy(allcalls[uniques], callsign);
                     allfreqs[uniques] = f1;
                     uniques++;
 
-                    // Add an extra space at the end of each line so that wspr-x doesn't
-                    // truncate the power (TNX to DL8FCL!)
-
+                    // Calculate display frequency and time offset
                     if (wspr_type == 15) {
                         freq_print = dialfreq + (1500 + 112.5 + f1 / 8.0) / 1e6;
                         dt_print = shift1 * 8 * dt - 1.0;
@@ -1427,6 +1422,7 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
                         dt_print = shift1 * dt - 1.0;
                     }
 
+                    // Store decode result
                     strcpy(decodes[uniques - 1].date, date);
                     strcpy(decodes[uniques - 1].time, uttime);
                     decodes[uniques - 1].sync = sync1;
@@ -1443,10 +1439,9 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
                 }
             }
         }
-
     }
 
-    // sort the result in order of increasing frequency
+    // Sort results by increasing frequency
     struct result temp;
     for (j = 1; j <= uniques - 1; j++) {
         for (k = 0; k < uniques - j; k++) {
@@ -1458,82 +1453,96 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
         }
     }
 
-    //return from here
+    /*
+     * ============================================================
+     * BUILD JAVA RETURN ARRAY
+     * ============================================================
+     * Create array of WSPRMessage objects to return to Java.
+     * Each object contains the decoded callsign, grid, power, SNR, etc.
+     */
     jobjectArray retn = (*env)->NewObjectArray(env, uniques, cls, 0);
+
+    // Get constructor: WSPRMessage(float snr, double freq, float dt, float drift, String message)
     jmethodID constructor = (*env)->GetMethodID(env, cls, "<init>", "(FDFFLjava/lang/String;)V");
 
-    for (i = 0; i < uniques; i++) {
+    /*
+     * Get field IDs for setting call, loc, power fields.
+     * These fields exist in WSPRMessage.java but are not set by the constructor.
+     * The decoded message string contains "CALLSIGN GRID POWER" which we parse
+     * and set into these fields for convenient access from Java.
+     */
+    jfieldID callField = (*env)->GetFieldID(env, cls, "call", "Ljava/lang/String;");
+    jfieldID locField = (*env)->GetFieldID(env, cls, "loc", "Ljava/lang/String;");
+    jfieldID powerField = (*env)->GetFieldID(env, cls, "power", "I");
 
-        jstring message = (*env)->NewStringUTF(env, decodes[i].message);
+    for (i = 0; i < uniques; i++) {
+        // Create the message string for the constructor
+        jstring jmessage = (*env)->NewStringUTF(env, decodes[i].message);
+
+        // Create WSPRMessage object via constructor
         jobject object = (*env)->NewObject(
                 env, cls, constructor,
-                (jfloat) decodes[i].snr, (jdouble) decodes[i].freq,
-                (jfloat) decodes[i].dt, (jfloat) decodes[i].drift,
-                message);
+                (jfloat) decodes[i].snr,
+                (jdouble) decodes[i].freq,
+                (jfloat) decodes[i].dt,
+                (jfloat) decodes[i].drift,
+                jmessage);
 
+        /*
+         * Parse the message string to extract individual fields.
+         * Format is "CALLSIGN GRID POWER", e.g., "N5HIM EM89 37"
+         *
+         * Note: Some messages may have different formats:
+         *   - Type 1: "CALL GRID POWER" (standard)
+         *   - Type 2: "<CALL> GRID POWER" (hashed call with <>)
+         *   - Type 3: "CALL/P GRID POWER" (portable suffix)
+         *
+         * sscanf handles these reasonably well, but edge cases may need
+         * additional parsing logic.
+         */
+        char parsed_call[13] = {0};
+        char parsed_loc[7] = {0};
+        int parsed_power = 0;
+
+        int parse_result = sscanf(decodes[i].message, "%12s %6s %d",
+                                  parsed_call, parsed_loc, &parsed_power);
+
+        if (parse_result >= 2) {
+            // Successfully parsed at least callsign and grid
+            jstring jcall = (*env)->NewStringUTF(env, parsed_call);
+            jstring jloc = (*env)->NewStringUTF(env, parsed_loc);
+
+            (*env)->SetObjectField(env, object, callField, jcall);
+            (*env)->SetObjectField(env, object, locField, jloc);
+            (*env)->SetIntField(env, object, powerField, parsed_power);
+
+            // Clean up local references to avoid JNI reference table overflow
+            (*env)->DeleteLocalRef(env, jcall);
+            (*env)->DeleteLocalRef(env, jloc);
+        }
+        // If parsing failed, fields remain null/0 (as initialized by constructor)
+
+        // Add object to return array
         (*env)->SetObjectArrayElement(env, retn, i, object);
 
-        /*printf("%4s %3.0f %4.1f %10.6f %2d  %-s \n",
-               decodes[i].time, decodes[i].snr, decodes[i].dt, decodes[i].freq,
-               (int) decodes[i].drift, decodes[i].message);
-        fprintf(fall_wspr,
-                "%6s %4s %3d %3.0f %5.2f %11.7f  %-22s %2d %5u %4d %4d %4d %2u\n",
-                decodes[i].date, decodes[i].time, (int) (10 * decodes[i].sync),
-                decodes[i].snr, decodes[i].dt, decodes[i].freq,
-                decodes[i].message, (int) decodes[i].drift, decodes[i].cycles / 81,
-                decodes[i].jitter, decodes[i].blocksize, decodes[i].metric, decodes[i].osd_decode);
-        fprintf(fwsprd,
-                "%6s %4s %3d %3.0f %4.1f %10.6f  %-22s %2d %5u %4d\n",
-                decodes[i].date, decodes[i].time, (int) (10 * decodes[i].sync),
-                decodes[i].snr, decodes[i].dt, decodes[i].freq,
-                decodes[i].message, (int) decodes[i].drift, decodes[i].cycles / 81,
-                decodes[i].jitter);*/
-
+        // Clean up local references
+        (*env)->DeleteLocalRef(env, jmessage);
+        (*env)->DeleteLocalRef(env, object);
     }
-    //printf("<DecodeFinished>\n");
 
+    /*
+     * ============================================================
+     * CLEANUP
+     * ============================================================
+     */
     fftwf_free(fftin);
     fftwf_free(fftout);
 
-    /*if ((fp_fftwf_wisdom_file = fopen(wisdom_fname, "w"))) {
-        fftwf_export_wisdom_to_file(fp_fftwf_wisdom_file);
-        fclose(fp_fftwf_wisdom_file);
-    }*/
-
     ttotal += (float) (clock() - t00) / CLOCKS_PER_SEC;
 
-    /*fprintf(ftimer, "%7.2f %7.2f %7.2f %7.2f %7.2f %7.2f %7.2f\n\n",
-            treadwav, tcandidates, tsync0, tsync1, tsync2, tfano, ttotal);
-
-    fprintf(ftimer, "Code segment        Seconds   Frac\n");
-    fprintf(ftimer, "-----------------------------------\n");
-    fprintf(ftimer, "readwavfile        %7.2f %7.2f\n", treadwav, treadwav / ttotal);
-    fprintf(ftimer, "Coarse DT f0 f1    %7.2f %7.2f\n", tcandidates,
-            tcandidates / ttotal);
-    fprintf(ftimer, "sync_and_demod(0)  %7.2f %7.2f\n", tsync0, tsync0 / ttotal);
-    fprintf(ftimer, "sync_and_demod(1)  %7.2f %7.2f\n", tsync1, tsync1 / ttotal);
-    fprintf(ftimer, "sync_and_demod(2)  %7.2f %7.2f\n", tsync2, tsync2 / ttotal);
-    fprintf(ftimer, "Stack/Fano decoder %7.2f %7.2f\n", tfano, tfano / ttotal);
-    fprintf(ftimer, "-----------------------------------\n");
-    fprintf(ftimer, "Total              %7.2f %7.2f\n", ttotal, 1.0);*/
-
-    //fclose(fall_wspr);
-    //fclose(fwsprd);
-    //  fclose(fdiag);
-    // fclose(ftimer);
     fftwf_destroy_plan(PLAN1);
     fftwf_destroy_plan(PLAN2);
     fftwf_destroy_plan(PLAN3);
-
-    /*if (usehashtable) {
-        fhash = fopen(hash_fname, "w");
-        for (i = 0; i < 32768; i++) {
-            if (strncmp(hashtab + i * 13, "\0", 1) != 0) {
-                fprintf(fhash, "%5d %s\n", i, hashtab + i * 13);
-            }
-        }
-        fclose(fhash);
-    }*/
 
     free(hashtab);
     free(symbols);
