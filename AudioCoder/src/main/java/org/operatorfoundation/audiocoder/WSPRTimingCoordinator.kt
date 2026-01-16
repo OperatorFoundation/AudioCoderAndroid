@@ -232,23 +232,36 @@ class WSPRTimingCoordinator
     private fun calculateNextEvenMinuteForDecode(currentMinute: Int, currentSecond: Int): Int {
         return if (currentMinute % MINUTES_PER_WSPR_CYCLE == 0)
         {
-            // Currently in an even minute (transmission window)
-            if (currentSecond >= DECODE_WINDOW_END_SECOND)
+            // Currently in an even minute (first minute of WSPR cycle)
+            if (currentSecond < DECODE_START_DELAY_SECONDS)
             {
-                // Too late in current window, use next even minute
-                currentMinute + MINUTES_PER_WSPR_CYCLE
+                // Before decode window opens, current window is "next"
+                currentMinute
             }
             else
             {
-                // Can still use current window
-                currentMinute
+                // Already in or past current decode window start, point to next cycle
+                currentMinute + MINUTES_PER_WSPR_CYCLE
             }
         }
         else
         {
-            // Currently in odd minute (silent period), next minute will be even
+            // Currently in odd minute (second minute of WSPR cycle)
+            // Next even minute is the start of the next cycle
             currentMinute + 1
         }
+    }
+
+    /**
+     * Determines if it's early enough in the current cycle to begin collection.
+     *
+     * @param maxEntryDelaySeconds Maximum seconds past cycle start to allow collection (default 5)
+     * @return true if collection should start now, false if should wait for next window
+     */
+    fun isEarlyEnoughToStartCollection(maxEntryDelaySeconds: Int = 5): Boolean
+    {
+        val cyclePosition = getCurrentCyclePosition()
+        return cyclePosition <= maxEntryDelaySeconds
     }
 
 }
