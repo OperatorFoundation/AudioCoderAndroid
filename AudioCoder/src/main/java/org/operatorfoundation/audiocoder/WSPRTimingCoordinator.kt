@@ -120,10 +120,8 @@ class WSPRTimingCoordinator
 
         val result = isEvenMinute && isPastDecodeStartDelay && isBeforeDecodeWindowEnd
 
-        // Add this logging
-        Timber.v("Decode window check: minute=$currentMinuteInHour, second=$currentSecondInMinute, " +
-                "isEven=$isEvenMinute, cyclePos=$cyclePositionSeconds, " +
-                "pastDelay=$isPastDecodeStartDelay, beforeEnd=$isBeforeDecodeWindowEnd, result=$result")
+        Timber.v("%snull", "Decode window check: minute=$currentMinuteInHour, second=$currentSecondInMinute, " +
+                "isEven=$isEvenMinute, cyclePos=$cyclePositionSeconds, ")
 
         return result
     }
