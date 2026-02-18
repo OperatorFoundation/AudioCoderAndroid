@@ -4,6 +4,9 @@ object WSPRConstants
 {
     const val CENTER_FREQUENCY_HZ = 1500
     const val SYMBOL_LENGTH = 8192
+    
+    /** Duration of each WSPR symbol in milliseconds */
+    const val SYMBOL_DURATION_MS = 683L
     const val SYMBOLS_PER_MESSAGE = 162 // WSPR messages have 162 symbols
 
     /** WSPR requires exactly 12kHz sample rate */
