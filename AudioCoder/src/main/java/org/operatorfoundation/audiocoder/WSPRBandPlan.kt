@@ -63,7 +63,7 @@ object WSPRBandplan
         WSPRBand(name = "60m", dialFrequencyMHz = 5.364700, wavelengthMeters = "60m", ITURegion.REGION_1),
         WSPRBand(name = "40m", dialFrequencyMHz = 7.038600, wavelengthMeters = "40m", ITURegion.GLOBAL, isPopular = true),
         WSPRBand(name = "30m", dialFrequencyMHz = 10.138700, wavelengthMeters = "30m", ITURegion.GLOBAL, isPopular = true),
-        WSPRBand(name = "20m", dialFrequencyMHz = 14.095600, wavelengthMeters = "20m", ITURegion.GLOBAL, isPopular = true),
+        WSPRBand(name = "20m", dialFrequencyMHz = 14.095000, wavelengthMeters = "20m", ITURegion.GLOBAL, isPopular = true),
         WSPRBand(name = "17m", dialFrequencyMHz = 18.104600, wavelengthMeters = "17m", ITURegion.GLOBAL),
         WSPRBand(name = "15m", dialFrequencyMHz = 21.094600, wavelengthMeters = "15m", ITURegion.GLOBAL, isPopular = true),
         WSPRBand(name = "12m", dialFrequencyMHz = 24.924600, wavelengthMeters = "12m", ITURegion.GLOBAL),
