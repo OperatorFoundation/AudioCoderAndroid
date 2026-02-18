@@ -178,6 +178,30 @@ class WSPRTimingCoordinator
     }
 
     /**
+     * Calculates milliseconds until the next even minute boundary.
+     *
+     * Used for WSPR transmission timing — transmissions must begin at even minutes.
+     * Unlike [calculateNextDecodeWindowStartTime], this returns the raw even minute
+     * boundary with no decode start delay applied.
+     *
+     * @return Milliseconds until the next even minute boundary (always > 0)
+     */
+    fun getMillisUntilNextEvenMinute(): Long
+    {
+        val calendar = Calendar.getInstance()
+        val currentMinute = calendar.get(Calendar.MINUTE)
+        val currentSecond = calendar.get(Calendar.SECOND)
+        val currentMillis = calendar.get(Calendar.MILLISECOND)
+
+        val cyclePosition = calculatePositionInCurrentWSPRCycle(currentMinute, currentSecond)
+
+        // Time remaining until end of current 2-minute cycle = start of next even minute.
+        // Subtract currentMillis for sub-second precision.
+        val secondsRemaining = WSPRTimingConstants.WSPR_CYCLE_DURATION_SECONDS - cyclePosition
+        return (secondsRemaining * 1000L) - currentMillis
+    }
+
+    /**
      * Provides real-time information about the current position within the WSPR cycle.
      *
      * This information is valuable for:
