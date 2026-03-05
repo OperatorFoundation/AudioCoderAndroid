@@ -21,6 +21,7 @@ android {
         externalNativeBuild {
             cmake {
                 targets("QuietScream")
+                arguments("-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384")
             }
         }
     }
