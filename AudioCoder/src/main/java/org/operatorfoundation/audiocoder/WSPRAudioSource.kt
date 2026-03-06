@@ -95,6 +95,14 @@ interface WSPRAudioSource
     suspend fun cleanup()
 
     /**
+     * Discards all buffered audio samples.
+     * Call immediately before starting a decode collection window to ensure
+     * only time-aligned audio is fed to the decoder.
+     * Default implementation is a no-op for sources that don't buffer.
+     */
+    suspend fun flushBuffer() {}
+
+    /**
      * Gets current status and diagnostic information about the audio source.
      *
      * This method provides information useful for:
