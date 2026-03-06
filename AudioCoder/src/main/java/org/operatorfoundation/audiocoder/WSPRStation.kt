@@ -300,6 +300,7 @@ class WSPRStation(
         // Phase 1: Prepare for audio collection
         _stationState.value = WSPRStationState.PreparingForCollection
         signalProcessor.clearBuffer()
+        audioSource.flushBuffer()
 
         // Phase 2: Collect audio for the required duration
         _stationState.value = WSPRStationState.CollectingAudio
