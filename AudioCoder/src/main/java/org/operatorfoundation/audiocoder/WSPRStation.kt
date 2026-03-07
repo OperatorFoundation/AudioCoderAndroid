@@ -307,12 +307,19 @@ class WSPRStation(
         val audioCollectionStartTime = System.currentTimeMillis()
         var totalSamplesCollected = 0
 
-        while (System.currentTimeMillis() - audioCollectionStartTime < AUDIO_COLLECTION_DURATION_MILLISECONDS)
+        // Collect until we have enough samples, or the time ceiling is exceeded
+        while (signalProcessor.audioBuffer.size < signalProcessor.getRequiredDecodeSamples())
         {
+            // Don't collect indefinitely if something is wrong
+            if (System.currentTimeMillis() - audioCollectionStartTime > AUDIO_COLLECTION_DURATION_MILLISECONDS + 5000L)
+            {
+                Timber.w("Audio collection timed out before required samples reached")
+                break
+            }
+
             val audioChunk = audioSource.readAudioChunk(AUDIO_CHUNK_DURATION_MILLISECONDS)
             signalProcessor.addSamples(audioChunk)
             totalSamplesCollected += audioChunk.size
-
             delay(AUDIO_COLLECTION_PAUSE_MILLISECONDS)
         }
 
