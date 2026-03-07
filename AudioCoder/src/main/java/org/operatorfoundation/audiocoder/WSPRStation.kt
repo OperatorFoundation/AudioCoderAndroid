@@ -363,11 +363,21 @@ class WSPRStation(
     {
         if (nativeResults == null) return emptyList()
 
-        nativeResults.forEach { msg ->
+        // Deduplicate on callsign+grid+power — SNR and freq offset are
+        // measurement artifacts that wsprd reports per drift estimate
+        val uniqueResults = nativeResults
+            .distinctBy { Triple(it.call?.trim(), it.loc?.trim(), it.power) }
+
+        if (uniqueResults.size < nativeResults.size)
+        {
+            Timber.d("Deduplicated ${nativeResults.size} results to ${uniqueResults.size}")
+        }
+
+        uniqueResults.forEach { msg ->
             Timber.d("NATIVE-RAW: call='${msg.call}', loc='${msg.loc}', power=${msg.power}, snr=${msg.snr}, message='${msg.message}'")
         }
 
-        return nativeResults.map { nativeMessage ->
+        return uniqueResults.map { nativeMessage ->
             WSPRDecodeResult(
                 callsign = nativeMessage.call?.trim() ?: WSPRDecodeResult.UNKNOWN_CALLSIGN,
                 gridSquare = nativeMessage.loc?.trim() ?: WSPRDecodeResult.UNKNOWN_GRID_SQUARE,
