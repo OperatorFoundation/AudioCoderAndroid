@@ -123,16 +123,24 @@ class WSPRStation(
             if (audioInitializationResult.isFailure)
             {
                 _stationState.value = WSPRStationState.Error("Audio source initialization failed: ${audioInitializationResult.exceptionOrNull()?.message}")
-                return  audioInitializationResult
+                return audioInitializationResult
             }
 
-            // Start the main station operation loop
+            // Single structured scope owns both the operation loop and the cycle info
+            // updates. When stationOperationJob is cancelled (via stopStation()), both
+            // child coroutines are cancelled together
             stationOperationJob = CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+
+                launch {
+                    while (isActive)
+                    {
+                        _cycleInformation.value = timingCoordinator.getCurrentCycleInformation()
+                        delay(CYCLE_INFORMATION_UPDATE_INTERVAL_MILLISECONDS)
+                    }
+                }
+
                 executeStationOperationLoop()
             }
-
-            // Start cycle information updates for UI
-            startCycleInformationUpdates()
 
             _stationState.value = WSPRStationState.Running
             Result.success(Unit)
@@ -389,22 +397,6 @@ class WSPRStation(
             )
         }
     }
-
-    /**
-     * Starts background updates for cycle information display.
-     * Updates cycle position and timing information every second for UI consumption.
-     */
-    private fun startCycleInformationUpdates()
-    {
-        CoroutineScope(Dispatchers.IO).launch {
-            while (stationOperationJob?.isActive == true)
-            {
-                _cycleInformation.value = timingCoordinator.getCurrentCycleInformation()
-                delay(CYCLE_INFORMATION_UPDATE_INTERVAL_MILLISECONDS)
-            }
-        }
-    }
-
 }
 
 /**
