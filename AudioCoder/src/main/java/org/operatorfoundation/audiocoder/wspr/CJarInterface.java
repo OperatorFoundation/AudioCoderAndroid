@@ -1,4 +1,4 @@
-package org.operatorfoundation.audiocoder;
+package org.operatorfoundation.audiocoder.wspr;
 
 public class CJarInterface {
     static {

@@ -1,4 +1,4 @@
-package org.operatorfoundation.audiocoder.models
+package org.operatorfoundation.audiocoder.wspr.models
 
 /**
  * Information about an upcoming WSPR decode window.

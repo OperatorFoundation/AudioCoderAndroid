@@ -1,4 +1,4 @@
-package org.operatorfoundation.audiocoder.models
+package org.operatorfoundation.audiocoder.wspr.models
 
 /**
  * Represents the current state of WSPR station operation.

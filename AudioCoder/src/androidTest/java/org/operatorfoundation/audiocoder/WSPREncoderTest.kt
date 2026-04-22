@@ -6,6 +6,8 @@ import org.junit.runner.RunWith
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.operatorfoundation.audiocoder.wspr.CJarInterface
+import org.operatorfoundation.audiocoder.wspr.WSPREncoder
 import kotlin.test.DefaultAsserter.assertNotNull
 
 @RunWith(AndroidJUnit4::class)
@@ -37,7 +39,7 @@ class WSPREncoderTest
 
         // Kotlin implementation
         val kotlinResult = WSPREncoder.encodeToFrequencies(
-            WSPREncoder.WSPRMessage(callsign, locator, power, offset, lsb)
+            WSPREncoder.WSPREncodeRequest(callsign, locator, power, offset, lsb)
         )
 
         // JNI implementation
@@ -60,7 +62,7 @@ class WSPREncoderTest
         val lsb = false
 
         val kotlinResult = WSPREncoder.encodeToFrequencies(
-            WSPREncoder.WSPRMessage(callsign, locator, power, offset, lsb)
+            WSPREncoder.WSPREncodeRequest(callsign, locator, power, offset, lsb)
         )
 
         val jniResult = CJarInterface.WSPREncodeToFrequencies(
@@ -79,7 +81,7 @@ class WSPREncoderTest
         val lsb = true
 
         val kotlinResult = WSPREncoder.encodeToFrequencies(
-            WSPREncoder.WSPRMessage(callsign, locator, power, offset, lsb)
+            WSPREncoder.WSPREncodeRequest(callsign, locator, power, offset, lsb)
         )
 
         val jniResult = CJarInterface.WSPREncodeToFrequencies(
@@ -106,7 +108,7 @@ class WSPREncoderTest
 
         for (callsign in testCases) {
             val kotlinResult = WSPREncoder.encodeToFrequencies(
-                WSPREncoder.WSPRMessage(callsign, locator, power)
+                WSPREncoder.WSPREncodeRequest(callsign, locator, power)
             )
 
             val jniResult = CJarInterface.WSPREncodeToFrequencies(
@@ -138,7 +140,7 @@ class WSPREncoderTest
 
         for (locator in testCases) {
             val kotlinResult = WSPREncoder.encodeToFrequencies(
-                WSPREncoder.WSPRMessage(callsign, locator, power)
+                WSPREncoder.WSPREncodeRequest(callsign, locator, power)
             )
 
             val jniResult = CJarInterface.WSPREncodeToFrequencies(
@@ -161,7 +163,7 @@ class WSPREncoderTest
 
         for (power in testPowers) {
             val kotlinResult = WSPREncoder.encodeToFrequencies(
-                WSPREncoder.WSPRMessage(callsign, locator, power)
+                WSPREncoder.WSPREncodeRequest(callsign, locator, power)
             )
 
             val jniResult = CJarInterface.WSPREncodeToFrequencies(
@@ -184,7 +186,7 @@ class WSPREncoderTest
 
         for (inputPower in testCases) {
             val kotlinResult = WSPREncoder.encodeToFrequencies(
-                WSPREncoder.WSPRMessage(callsign, locator, inputPower)
+                WSPREncoder.WSPREncodeRequest(callsign, locator, inputPower)
             )
 
             val jniResult = CJarInterface.WSPREncodeToFrequencies(
@@ -201,7 +203,7 @@ class WSPREncoderTest
 
     @Test
     fun testFrequencyRangeCorrectness() {
-        val message = WSPREncoder.WSPRMessage(
+        val message = WSPREncoder.WSPREncodeRequest(
             callsign = "W1ABC",
             locator = "FN20",
             powerDbm = 30,
@@ -226,11 +228,11 @@ class WSPREncoderTest
         val power = 30
 
         val usbResult = WSPREncoder.encodeToFrequencies(
-            WSPREncoder.WSPRMessage(callsign, locator, power, 0, false)
+            WSPREncoder.WSPREncodeRequest(callsign, locator, power, 0, false)
         )
 
         val lsbResult = WSPREncoder.encodeToFrequencies(
-            WSPREncoder.WSPRMessage(callsign, locator, power, 0, true)
+            WSPREncoder.WSPREncodeRequest(callsign, locator, power, 0, true)
         )
 
         var differencesFound = 0
@@ -251,11 +253,11 @@ class WSPREncoderTest
         val offset = 1000
 
         val noOffsetResult = WSPREncoder.encodeToFrequencies(
-            WSPREncoder.WSPRMessage(callsign, locator, power, 0, false)
+            WSPREncoder.WSPREncodeRequest(callsign, locator, power, 0, false)
         )
 
         val offsetResult = WSPREncoder.encodeToFrequencies(
-            WSPREncoder.WSPRMessage(callsign, locator, power, offset, false)
+            WSPREncoder.WSPREncodeRequest(callsign, locator, power, offset, false)
         )
 
         for (i in noOffsetResult.indices) {
@@ -281,7 +283,7 @@ class WSPREncoderTest
                     for (offset in offsets) {
                         for (lsb in lsbModes) {
                             val kotlinResult = WSPREncoder.encodeToFrequencies(
-                                WSPREncoder.WSPRMessage(callsign, locator, power, offset, lsb)
+                                WSPREncoder.WSPREncodeRequest(callsign, locator, power, offset, lsb)
                             )
 
                             val jniResult = CJarInterface.WSPREncodeToFrequencies(

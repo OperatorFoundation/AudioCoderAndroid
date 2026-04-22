@@ -1,9 +1,6 @@
-package org.operatorfoundation.audiocoder
+package org.operatorfoundation.audiocoder.wspr
 
-import org.operatorfoundation.audiocoder.models.WSPRAudioSourceStatus
-import org.operatorfoundation.audiocoder.WSPRConstants.WSPR_REQUIRED_BIT_DEPTH
-import org.operatorfoundation.audiocoder.WSPRConstants.WSPR_REQUIRED_CHANNELS
-import org.operatorfoundation.audiocoder.WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE
+import org.operatorfoundation.audiocoder.wspr.models.WSPRAudioSourceStatus
 
 /**
  * Interface for providing audio data to WSPR station.
@@ -170,9 +167,9 @@ class WSPRAudioSourceException(
         {
             return WSPRAudioSourceException(
                 "Audio source format incompatible with WSPR requirements. " +
-                        "Required: ${WSPR_REQUIRED_SAMPLE_RATE}Hz, " +
-                        "${WSPR_REQUIRED_CHANNELS} channel, " +
-                        "${WSPR_REQUIRED_BIT_DEPTH}-bit. " +
+                        "Required: ${WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE}Hz, " +
+                        "${WSPRConstants.WSPR_REQUIRED_CHANNELS} channel, " +
+                        "${WSPRConstants.WSPR_REQUIRED_BIT_DEPTH}-bit. " +
                         "Actual: ${actualSampleRate}Hz, ${actualChannels} channels, ${actualBitDepth}-bit."
             )
         }

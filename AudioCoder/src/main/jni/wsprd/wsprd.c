@@ -990,7 +990,7 @@ jobjectArray jani_do_process(JNIEnv *env, jclass clazz,
      * Get reference to Java WSPRMessage class for creating return objects.
      * This is done early so we can return an empty array on error.
      */
-    jclass cls = (*env)->FindClass(env, "org/operatorfoundation/audiocoder/WSPRMessage");
+    jclass cls = (*env)->FindClass(env, "org/operatorfoundation/audiocoder/wspr/WSPRMessage");
 
     /*
      * Read and process the audio data from the byte array.

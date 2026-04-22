@@ -149,7 +149,7 @@ byte[] audioData = CJarInterface.WSPREncodeToPCM(
 ### Basic WSPR Decoding (Low-level API)
 
 ```java
-import org.operatorfoundation.audiocoder.WSPRMessage;
+import org.operatorfoundation.audiocoder.wspr.WSPRMessage;
 
 // Decode WSPR from audio data
 WSPRMessage[] messages = CJarInterface.WSPRDecodeFromPcm(

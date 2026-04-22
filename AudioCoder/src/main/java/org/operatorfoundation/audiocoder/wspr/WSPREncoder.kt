@@ -1,4 +1,4 @@
-package org.operatorfoundation.audiocoder
+package org.operatorfoundation.audiocoder.wspr
 
 import android.util.Log
 
@@ -10,8 +10,8 @@ import android.util.Log
  *
  * Based on BD1ES's wspr_enc.c implementation.
  */
-object WSPREncoder {
-
+object WSPREncoder
+{
     private const val TAG = "WSPREncoder"
     private const val SYMBOL_COUNT = 162
     private const val BASE_FREQUENCY_HZ = 1500.0
@@ -20,7 +20,7 @@ object WSPREncoder {
     /**
      * WSPR message containing all transmission parameters.
      */
-    data class WSPRMessage(
+    data class WSPREncodeRequest(
         val callsign: String,      // e.g., "W1ABC"
         val locator: String,       // 4-character grid square, e.g., "FN20"
         val powerDbm: Int,         // Transmit power in dBm
@@ -34,7 +34,7 @@ object WSPREncoder {
      * @param message WSPR message parameters
      * @return Array of 162 frequencies in centihertz
      */
-    fun encodeToFrequencies(message: WSPRMessage): LongArray {
+    fun encodeToFrequencies(message: WSPREncodeRequest): LongArray {
         Log.i(TAG, "Encoding WSPR: ${message.callsign} ${message.locator} ${message.powerDbm}dBm")
 
         require(message.locator.length == 4) {

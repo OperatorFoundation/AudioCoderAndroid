@@ -1,6 +1,6 @@
-package org.operatorfoundation.audiocoder.models
+package org.operatorfoundation.audiocoder.wspr.models
 
-import org.operatorfoundation.audiocoder.WSPRBandplan
+import org.operatorfoundation.audiocoder.wspr.WSPRBandplan
 
 /**
  * Configuration parameters for WSPR station operation.

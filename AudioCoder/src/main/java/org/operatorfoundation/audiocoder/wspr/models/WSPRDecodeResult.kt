@@ -1,8 +1,8 @@
-package org.operatorfoundation.audiocoder.models
+package org.operatorfoundation.audiocoder.wspr.models
 
 import android.icu.util.Calendar
-import org.operatorfoundation.audiocoder.extensions.format
-import org.operatorfoundation.audiocoder.extensions.formatOffset
+import org.operatorfoundation.audiocoder.common.format
+import org.operatorfoundation.audiocoder.common.formatOffset
 import kotlin.math.abs
 
 /**

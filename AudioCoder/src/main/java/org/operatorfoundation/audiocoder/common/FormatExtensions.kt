@@ -1,4 +1,4 @@
-package org.operatorfoundation.audiocoder.extensions
+package org.operatorfoundation.audiocoder.common
 
 // ========== Extension Functions for Formatting ==========
 

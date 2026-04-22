@@ -1,10 +1,9 @@
-package org.operatorfoundation.audiocoder
+package org.operatorfoundation.audiocoder.wspr
 
-import org.operatorfoundation.audiocoder.WSPRBandplan.getDefaultFrequency
-import org.operatorfoundation.audiocoder.WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE
-import org.operatorfoundation.audiocoder.WSPRConstants.SYMBOLS_PER_MESSAGE
 import timber.log.Timber
+import kotlin.math.abs
 import kotlin.math.pow
+import kotlin.math.sqrt
 
 /**
  * High-level WSPR audio processing with buffering and multiple decode strategies.
@@ -24,7 +23,7 @@ class WSPRProcessor
 
         // WSPR Protocol Constants
         private const val WSPR_SYMBOL_DURATION_SECONDS = 0.683f //Each symbol is ~0.683 seconds
-        private const val WSPR_TRANSMISSION_DURATION_SECONDS = WSPR_SYMBOL_DURATION_SECONDS * SYMBOLS_PER_MESSAGE // ~110.6 seconds
+        private const val WSPR_TRANSMISSION_DURATION_SECONDS = WSPR_SYMBOL_DURATION_SECONDS * WSPRConstants.SYMBOLS_PER_MESSAGE // ~110.6 seconds
         private const val WSPR_CYCLE_DURATION_SECONDS = 120f // WSPR transmits every 2 minutes
 
         // Buffer Timing Constants
@@ -36,8 +35,8 @@ class WSPRProcessor
         private const val MAX_DECODE_WINDOWS = 6 // Limit processing to prevent excessive CPU usage
 
         // Buffer Size Calculations
-        private const val MAXIMUM_BUFFER_SAMPLES = (WSPR_REQUIRED_SAMPLE_RATE * RECOMMENDED_BUFFER_SECONDS).toInt()
-        private const val REQUIRED_DECODE_SAMPLES = (WSPR_REQUIRED_SAMPLE_RATE * REQUIRED_DECODE_SECONDS).toInt() // Native decoder limit
+        private const val MAXIMUM_BUFFER_SAMPLES = (WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE * RECOMMENDED_BUFFER_SECONDS).toInt()
+        private const val REQUIRED_DECODE_SAMPLES = (WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE * REQUIRED_DECODE_SECONDS).toInt() // Native decoder limit
     }
 
     val audioBuffer = mutableListOf<Short>()
@@ -65,7 +64,7 @@ class WSPRProcessor
     /**
      * Gets the current buffer duration in seconds.
      */
-    fun getBufferDurationSeconds(): Float = audioBuffer.size.toFloat() / WSPR_REQUIRED_SAMPLE_RATE
+    fun getBufferDurationSeconds(): Float = audioBuffer.size.toFloat() / WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE
 
     /**
      * Checks if buffer has enough data for a WSPR decode attempt.
@@ -86,7 +85,7 @@ class WSPRProcessor
      * @return Array of decoded WSPR messages, or null if insufficient data
      */
     fun decodeBufferedWSPR(
-        dialFrequencyMHz: Double = getDefaultFrequency(),
+        dialFrequencyMHz: Double = WSPRBandplan.getDefaultFrequency(),
         useLowerSideband: Boolean = false,
         useTimeAlignment: Boolean = false
     ): Array<WSPRMessage>?
@@ -149,7 +148,7 @@ class WSPRProcessor
         }
 
         val windows = mutableListOf<DecodeWindow>()
-        val stepSamples = (WSPR_REQUIRED_SAMPLE_RATE * SLIDING_WINDOW_STEP_SECONDS).toInt()
+        val stepSamples = (WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE * SLIDING_WINDOW_STEP_SECONDS).toInt()
         val maxWindows = minOf(MAX_DECODE_WINDOWS, (audioBuffer.size - REQUIRED_DECODE_SAMPLES) / stepSamples + 1)
 
         for (windowIndex in 0 until maxWindows)
@@ -162,7 +161,7 @@ class WSPRProcessor
                 windows.add(DecodeWindow(
                     startIndex,
                     endIndex,
-                    "Sliding window ${windowIndex + 1} (${startIndex / WSPR_REQUIRED_SAMPLE_RATE}s-${endIndex / WSPR_REQUIRED_SAMPLE_RATE}s)"
+                    "Sliding window ${windowIndex + 1} (${startIndex / WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE}s-${endIndex / WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE}s)"
                 ))
             }
         }
@@ -192,10 +191,10 @@ class WSPRProcessor
         windows.add(DecodeWindow(
             startIndex = 0,
             endIndex = endIndex,
-            description = "Time-aligned window (0s-${endIndex / WSPR_REQUIRED_SAMPLE_RATE}s)"
+            description = "Time-aligned window (0s-${endIndex / WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE}s)"
         ))
 
-        Timber.d("Generated time-aligned window: 0-${endIndex} samples (${endIndex / WSPR_REQUIRED_SAMPLE_RATE}s)")
+        Timber.d("Generated time-aligned window: 0-${endIndex} samples (${endIndex / WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE}s)")
 
         return windows
     }
@@ -225,7 +224,7 @@ class WSPRProcessor
 
                 Timber.d("Calling native decoder:")
                 Timber.d("  Window: ${window.description}")
-                Timber.d("  Samples: ${windowSamples.size} (${windowSamples.size / WSPR_REQUIRED_SAMPLE_RATE}s)")
+                Timber.d("  Samples: ${windowSamples.size} (${windowSamples.size / WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE}s)")
                 Timber.d("  Bytes: ${audioBytes.size}")
                 Timber.d("  Frequency: ${dialFrequencyMHz} MHz")
                 Timber.d("  LSB: $useLowerSideband")
@@ -275,8 +274,8 @@ class WSPRProcessor
 
     private fun analyzeAudioQuality(samples: ShortArray): String
     {
-        val rms = kotlin.math.sqrt(samples.map { (it.toFloat() / Short.MAX_VALUE).pow(2) }.average())
-        val peakSample = samples.maxOfOrNull { kotlin.math.abs(it.toInt()) } ?: 0
+        val rms = sqrt(samples.map { (it.toFloat() / Short.MAX_VALUE).pow(2) }.average())
+        val peakSample = samples.maxOfOrNull { abs(it.toInt()) } ?: 0
         val peak = peakSample.toFloat() / Short.MAX_VALUE
         return "RMS=%.3f, Peak=%.3f".format(rms, peak)
     }

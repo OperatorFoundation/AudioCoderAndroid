@@ -1,4 +1,4 @@
-package org.operatorfoundation.audiocoder
+package org.operatorfoundation.audiocoder.common
 
 import timber.log.Timber
 import kotlin.math.roundToInt
@@ -41,7 +41,7 @@ class AudioResampler(
         require(inputSampleRate > 0) { "Input sample rate must be positive: $inputSampleRate" }
         require(outputSampleRate > 0) { "Output sample rate must be positive: $outputSampleRate" }
 
-        Timber.d("AudioResampler initialized: ${inputSampleRate}Hz -> ${outputSampleRate}Hz (ratio: %.3f)".format(resampleRatio))
+        Timber.Forest.d("AudioResampler initialized: ${inputSampleRate}Hz -> ${outputSampleRate}Hz (ratio: %.3f)".format(resampleRatio))
     }
 
     /**
@@ -53,7 +53,7 @@ class AudioResampler(
     fun resample(inputSamples: ShortArray): ShortArray
     {
         if (inputSamples.isEmpty()) {
-            Timber.v("Empty input samples, returning empty array")
+            Timber.Forest.v("Empty input samples, returning empty array")
             return shortArrayOf()
         }
 
@@ -122,7 +122,7 @@ class AudioResampler(
         lastSample = 0
         totalInputSamples = 0L
         totalOutputSamples = 0L
-        Timber.v("AudioResampler state reset")
+        Timber.Forest.v("AudioResampler state reset")
     }
 
     /**

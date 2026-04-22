@@ -1,7 +1,6 @@
-package org.operatorfoundation.audiocoder.models
+package org.operatorfoundation.audiocoder.wspr.models
 
-import org.operatorfoundation.audiocoder.WSPRTimingConstants
-import org.operatorfoundation.audiocoder.WSPRTimingConstants.WSPR_CYCLE_DURATION_SECONDS
+import org.operatorfoundation.audiocoder.wspr.WSPRTimingConstants.WSPR_CYCLE_DURATION_SECONDS
 
 /**
  * Real-time information about the current WSPR cycle state.

@@ -1,14 +1,10 @@
-package org.operatorfoundation.audiocoder
+package org.operatorfoundation.audiocoder.wspr
 
 import android.icu.util.Calendar
-import org.operatorfoundation.audiocoder.WSPRTimingConstants.DECODE_START_DELAY_SECONDS
-import org.operatorfoundation.audiocoder.WSPRTimingConstants.DECODE_WINDOW_END_SECOND
+import org.operatorfoundation.audiocoder.wspr.WSPRTimingConstants.DECODE_START_DELAY_SECONDS
 
-import org.operatorfoundation.audiocoder.WSPRTimingConstants.MINUTES_PER_HOUR
-import org.operatorfoundation.audiocoder.WSPRTimingConstants.MINUTES_PER_WSPR_CYCLE
-import org.operatorfoundation.audiocoder.WSPRTimingConstants.SECONDS_PER_MINUTE
-import org.operatorfoundation.audiocoder.models.WSPRCycleInformation
-import org.operatorfoundation.audiocoder.models.WSPRDecodeWindowInformation
+import org.operatorfoundation.audiocoder.wspr.models.WSPRCycleInformation
+import org.operatorfoundation.audiocoder.wspr.models.WSPRDecodeWindowInformation
 import timber.log.Timber
 
 /**
@@ -74,12 +70,12 @@ class WSPRTimingCoordinator
         // Build the target decode start time
         val decodeStartCalendar = Calendar.getInstance()
         decodeStartCalendar.timeInMillis = currentTime
-        decodeStartCalendar.set(Calendar.MINUTE, nextDecodeMinute % MINUTES_PER_HOUR)
-        decodeStartCalendar.set(Calendar.SECOND, WSPRTimingConstants.DECODE_START_DELAY_SECONDS.toInt())
+        decodeStartCalendar.set(Calendar.MINUTE, nextDecodeMinute % WSPRTimingConstants.MINUTES_PER_HOUR)
+        decodeStartCalendar.set(Calendar.SECOND, DECODE_START_DELAY_SECONDS.toInt())
         decodeStartCalendar.set(Calendar.MILLISECOND, 0)
 
         // Handle hour boundary crossing
-        if (nextDecodeMinute >= MINUTES_PER_HOUR)
+        if (nextDecodeMinute >= WSPRTimingConstants.MINUTES_PER_HOUR)
         {
             decodeStartCalendar.add(Calendar.HOUR_OF_DAY, 1)
         }
@@ -109,14 +105,14 @@ class WSPRTimingCoordinator
         val currentSecondInMinute = currentTimeCalendar.get(Calendar.SECOND)
 
         // Cneck if we're in an even minute (transmission window)
-        val isEvenMinute = (currentMinuteInHour % MINUTES_PER_WSPR_CYCLE == 0)
+        val isEvenMinute = (currentMinuteInHour % WSPRTimingConstants.MINUTES_PER_WSPR_CYCLE == 0)
 
         // Calculate position within the current 2-minute WSPR cycle (0-119 seconds)
         val cyclePositionSeconds = calculatePositionInCurrentWSPRCycle(currentMinuteInHour, currentSecondInMinute)
 
         // Check timing constraints within the full 2-minute cycle
-        val isPastDecodeStartDelay = (cyclePositionSeconds >= DECODE_START_DELAY_SECONDS)
-        val isBeforeDecodeWindowEnd = (cyclePositionSeconds <= DECODE_WINDOW_END_SECOND)
+        val isPastDecodeStartDelay = (cyclePositionSeconds >= WSPRTimingConstants.DECODE_START_DELAY_SECONDS)
+        val isBeforeDecodeWindowEnd = (cyclePositionSeconds <= WSPRTimingConstants.DECODE_WINDOW_END_SECOND)
 
         val result = isEvenMinute && isPastDecodeStartDelay && isBeforeDecodeWindowEnd
 
@@ -139,8 +135,8 @@ class WSPRTimingCoordinator
      */
     private fun calculatePositionInCurrentWSPRCycle(currentMinute: Int, currentSecond: Int): Int
     {
-        val minuteInCycle = currentMinute % MINUTES_PER_WSPR_CYCLE
-        return minuteInCycle * SECONDS_PER_MINUTE + currentSecond
+        val minuteInCycle = currentMinute % WSPRTimingConstants.MINUTES_PER_WSPR_CYCLE
+        return minuteInCycle * WSPRTimingConstants.SECONDS_PER_MINUTE + currentSecond
     }
 
     /**
@@ -221,7 +217,7 @@ class WSPRTimingCoordinator
         val positionInCurrentCycle = calculatePositionInCurrentWSPRCycle(currentMinuteInHour, currentSecondInMinute)
 
         // Determine current transmission status
-        val isCurrentlyTransmissionWindow = (currentMinuteInHour % MINUTES_PER_WSPR_CYCLE == 0)
+        val isCurrentlyTransmissionWindow = (currentMinuteInHour % WSPRTimingConstants.MINUTES_PER_WSPR_CYCLE == 0)
         val isCurrentlyInTransmission = isCurrentlyTransmissionWindow &&
                 (currentSecondInMinute <= WSPRTimingConstants.WSPR_TRANSMISSION_DURATION_SECONDS)
 
@@ -252,10 +248,10 @@ class WSPRTimingCoordinator
      * @return Next suitable minute for decode start (may exceed 59 for hour boundary)
      */
     private fun calculateNextEvenMinuteForDecode(currentMinute: Int, currentSecond: Int): Int {
-        return if (currentMinute % MINUTES_PER_WSPR_CYCLE == 0)
+        return if (currentMinute % WSPRTimingConstants.MINUTES_PER_WSPR_CYCLE == 0)
         {
             // Currently in an even minute (first minute of WSPR cycle)
-            if (currentSecond < DECODE_START_DELAY_SECONDS)
+            if (currentSecond < WSPRTimingConstants.DECODE_START_DELAY_SECONDS)
             {
                 // Before decode window opens, current window is "next"
                 currentMinute
@@ -263,7 +259,7 @@ class WSPRTimingCoordinator
             else
             {
                 // Already in or past current decode window start, point to next cycle
-                currentMinute + MINUTES_PER_WSPR_CYCLE
+                currentMinute + WSPRTimingConstants.MINUTES_PER_WSPR_CYCLE
             }
         }
         else

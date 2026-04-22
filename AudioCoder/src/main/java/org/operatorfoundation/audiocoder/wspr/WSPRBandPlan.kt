@@ -1,4 +1,6 @@
-package org.operatorfoundation.audiocoder
+package org.operatorfoundation.audiocoder.wspr
+
+import kotlin.math.abs
 
 /**
  * WSPR Band Plan containing official WSPR frequencies for amateur radio bands.
@@ -99,7 +101,7 @@ object WSPRBandplan
     {
         val toleranceMHz = toleranceKHz / 1000.0
         return ALL_BANDS.find {
-            kotlin.math.abs(it.dialFrequencyMHz - frequencyMHz) <= toleranceMHz
+            abs(it.dialFrequencyMHz - frequencyMHz) <= toleranceMHz
         }
     }
 

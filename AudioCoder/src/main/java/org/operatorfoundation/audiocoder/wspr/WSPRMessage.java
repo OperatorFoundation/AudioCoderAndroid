@@ -1,17 +1,17 @@
-package org.operatorfoundation.audiocoder;
+package org.operatorfoundation.audiocoder.wspr;
 
 public class WSPRMessage
 {
     public String out;
-    float snr;
-    float dt;
-    float drift;
-    double freq;
-    String message;
-    String call;
+    public float snr;
+    public float dt;
+    public float drift;
+    public double freq;
+    public String message;
+    public String call;
     int callhash;
-    String loc;
-    int power;
+    public String loc;
+    public int power;
 
     public WSPRMessage(float snr, double freq, float dt, float drift, String message)
     {

@@ -1,8 +1,8 @@
-package org.operatorfoundation.audiocoder.models
+package org.operatorfoundation.audiocoder.wspr.models
 
-import org.operatorfoundation.audiocoder.WSPRConstants.WSPR_REQUIRED_BIT_DEPTH
-import org.operatorfoundation.audiocoder.WSPRConstants.WSPR_REQUIRED_CHANNELS
-import org.operatorfoundation.audiocoder.WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE
+import org.operatorfoundation.audiocoder.wspr.WSPRConstants.WSPR_REQUIRED_BIT_DEPTH
+import org.operatorfoundation.audiocoder.wspr.WSPRConstants.WSPR_REQUIRED_CHANNELS
+import org.operatorfoundation.audiocoder.wspr.WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE
 
 /**
  * Status and diagnostic information for a WSPR audio source.

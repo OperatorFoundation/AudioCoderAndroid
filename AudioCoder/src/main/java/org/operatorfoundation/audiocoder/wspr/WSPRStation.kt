@@ -1,17 +1,12 @@
-package org.operatorfoundation.audiocoder
+package org.operatorfoundation.audiocoder.wspr
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.operatorfoundation.audiocoder.WSPRTimingConstants.AUDIO_CHUNK_DURATION_MILLISECONDS
-import org.operatorfoundation.audiocoder.WSPRTimingConstants.AUDIO_COLLECTION_DURATION_MILLISECONDS
-import org.operatorfoundation.audiocoder.WSPRTimingConstants.AUDIO_COLLECTION_PAUSE_MILLISECONDS
-import org.operatorfoundation.audiocoder.WSPRTimingConstants.CYCLE_INFORMATION_UPDATE_INTERVAL_MILLISECONDS
-import org.operatorfoundation.audiocoder.models.WSPRCycleInformation
-import org.operatorfoundation.audiocoder.models.WSPRDecodeResult
-import org.operatorfoundation.audiocoder.models.WSPRStationConfiguration
-import org.operatorfoundation.audiocoder.models.WSPRStationState
+import org.operatorfoundation.audiocoder.wspr.models.WSPRCycleInformation
+import org.operatorfoundation.audiocoder.wspr.models.WSPRDecodeResult
+import org.operatorfoundation.audiocoder.wspr.models.WSPRStationConfiguration
+import org.operatorfoundation.audiocoder.wspr.models.WSPRStationState
 import timber.log.Timber
-import java.util.*
 
 /**
  * WSPR station provides complete amateur radio WSPR (Weak Signal Propagation Reporter) functionality.
@@ -135,7 +130,7 @@ class WSPRStation(
                     while (isActive)
                     {
                         _cycleInformation.value = timingCoordinator.getCurrentCycleInformation()
-                        delay(CYCLE_INFORMATION_UPDATE_INTERVAL_MILLISECONDS)
+                        delay(WSPRTimingConstants.CYCLE_INFORMATION_UPDATE_INTERVAL_MILLISECONDS)
                     }
                 }
 
@@ -319,16 +314,16 @@ class WSPRStation(
         while (signalProcessor.audioBuffer.size < signalProcessor.getRequiredDecodeSamples())
         {
             // Don't collect indefinitely if something is wrong
-            if (System.currentTimeMillis() - audioCollectionStartTime > AUDIO_COLLECTION_DURATION_MILLISECONDS + 5000L)
+            if (System.currentTimeMillis() - audioCollectionStartTime > WSPRTimingConstants.AUDIO_COLLECTION_DURATION_MILLISECONDS + 5000L)
             {
                 Timber.w("Audio collection timed out before required samples reached")
                 break
             }
 
-            val audioChunk = audioSource.readAudioChunk(AUDIO_CHUNK_DURATION_MILLISECONDS)
+            val audioChunk = audioSource.readAudioChunk(WSPRTimingConstants.AUDIO_CHUNK_DURATION_MILLISECONDS)
             signalProcessor.addSamples(audioChunk)
             totalSamplesCollected += audioChunk.size
-            delay(AUDIO_COLLECTION_PAUSE_MILLISECONDS)
+            delay(WSPRTimingConstants.AUDIO_COLLECTION_PAUSE_MILLISECONDS)
         }
 
         Timber.d(">>> COLLECTION DONE: ${totalSamplesCollected} samples in ${System.currentTimeMillis() - audioCollectionStartTime}ms")
