@@ -6,9 +6,26 @@ import org.junit.runner.RunWith
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import kotlin.test.DefaultAsserter.assertNotNull
 
 @RunWith(AndroidJUnit4::class)
-class WSPREncoderTest {
+class WSPREncoderTest
+{
+    companion object
+    {
+        const val TEST_CALLSIGN = "AA0AAA"
+        const val TEST_GRID     = "FN20"
+        const val TEST_POWER    = 30
+        const val TEST_FREQ_MHZ = 14.0956
+
+        // From jni_link.h: WSPR_SYMBOL_LENGTH = 8192
+        // 162 symbols × 8192 samples/symbol × 2 bytes/sample (16-bit PCM)
+        const val EXPECTED_PCM_BYTES = 162 * 8192 * 2  // = 2,654,208
+
+        // Native decoder requires 114s of audio:
+        // 114s × 12,000 samples/s × 2 bytes/sample
+        const val DECODER_REQUIRED_BYTES = 114 * 12_000 * 2  // = 2,736,000
+    }
 
     @Test
     fun testBasicEncodingMatchesJNI() {
@@ -284,5 +301,41 @@ class WSPREncoderTest {
         }
 
         println("✓ Ran $testCount comprehensive comparison tests - all passed!")
+    }
+
+    @Test
+    fun wsprEncodeToPCM_returnsCorrectByteCount()
+    {
+        val pcm = CJarInterface.WSPREncodeToPCM(
+            TEST_CALLSIGN, TEST_GRID, TEST_POWER, 0, false
+        )
+
+        assertNotNull("WSPREncodeToPCM returned null", pcm)
+        assertEquals(
+            "PCM output size should be 162 symbols × 8192 samples × 2 bytes",
+            EXPECTED_PCM_BYTES,
+            pcm.size
+        )
+    }
+
+    @Test
+    fun wsprRoundTrip_decodesCallsignAndGrid()
+    {
+        val encodedPcm = CJarInterface.WSPREncodeToPCM(
+            TEST_CALLSIGN, TEST_GRID, TEST_POWER, 0, false
+        )
+
+        assertNotNull("WSPREncodeToPCM returned null", encodedPcm)
+
+        // Zero-pad to decoder minimum — encoded signal is 110.6s, decoder needs 114s
+        val paddedBuffer = ByteArray(DECODER_REQUIRED_BYTES)
+        encodedPcm.copyInto(paddedBuffer)
+
+        val results = CJarInterface.WSPRDecodeFromPcm(paddedBuffer, TEST_FREQ_MHZ, false)
+
+        assertNotNull("WSPRDecodeFromPcm returned null", results)
+        assertTrue("Decoder should recover at least one message", results.isNotEmpty())
+        assertEquals("Decoded callsign should match", TEST_CALLSIGN, results[0].call?.trim())
+        assertEquals("Decoded grid should match", TEST_GRID, results[0].loc?.trim())
     }
 }
