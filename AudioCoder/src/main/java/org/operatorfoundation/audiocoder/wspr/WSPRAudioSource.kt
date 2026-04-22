@@ -1,6 +1,6 @@
 package org.operatorfoundation.audiocoder.wspr
 
-import org.operatorfoundation.audiocoder.wspr.models.WSPRAudioSourceStatus
+import org.operatorfoundation.audiocoder.common.models.AudioSourceStatus
 
 /**
  * Interface for providing audio data to WSPR station.
@@ -109,7 +109,7 @@ interface WSPRAudioSource
      *
      * @return Current status and diagnostic information
      */
-    suspend fun getSourceStatus(): WSPRAudioSourceStatus
+    suspend fun getSourceStatus(): AudioSourceStatus
 }
 
 /**
