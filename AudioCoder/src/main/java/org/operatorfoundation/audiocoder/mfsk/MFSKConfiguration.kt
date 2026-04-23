@@ -19,7 +19,7 @@ package org.operatorfoundation.audiocoder.mfsk
 data class MFSKConfiguration(
     val mode: MFSKMode,
     val baseFrequencyHz: Double,
-    val sampleRate: Int   = 12_000,
-    val amplitude: Double = 0.5,
-    val timeoutMs: Long   = 60_000L
+    val sampleRate: Int   = MFSKConstants.MFSK_RECOMMENDED_SAMPLE_RATE,
+    val amplitude: Double = MFSKConstants.MFSK_DEFAULT_AMPLITUDE,
+    val timeoutMs: Long   = MFSKConstants.MFSK_DEFAULT_TIMEOUT_MS
 )
