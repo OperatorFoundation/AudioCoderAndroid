@@ -41,8 +41,6 @@ interface WSPRAudioSource
      *
      * @return Success if initialization completed without errors,
      *         Failure with descriptive error information if initialization failed
-     *
-     * @throws WSPRAudioSourceException for unrecoverable initialization errors
      */
     suspend fun initialize(): Result<Unit>
 
@@ -68,8 +66,6 @@ interface WSPRAudioSource
      * @return Array of 16-bit audio samples covering the requested duration.
      *         May be shorter than requested if insufficient audio is available.
      *         Should not be longer than requested to prevent buffer overflow.
-     *
-     * @throws WSPRAudioSourceException for unrecoverable read errors
      */
     suspend fun readAudioChunk(durationMs: Long): ShortArray
 
@@ -110,68 +106,4 @@ interface WSPRAudioSource
      * @return Current status and diagnostic information
      */
     suspend fun getSourceStatus(): AudioSourceStatus
-}
-
-/**
- * Exception thrown by WSPR audio source implementations.
- */
-class WSPRAudioSourceException(
-    message: String,
-    cause: Throwable? = null
-) : Exception(message, cause)
-{
-    companion object
-    {
-        /**
-         * Creates an exception for initialization failures.
-         *
-         * @param sourceDescription Type or name of the audio source
-         * @param cause Underlying cause of the failure
-         * @return Formatted exception with descriptive message
-         */
-        fun createInitializationFailure(sourceDescription: String, cause: Throwable? = null): WSPRAudioSourceException
-        {
-            return WSPRAudioSourceException(
-                "Failed to initialize WSPR audio source: $sourceDescription. ${cause?.message ?: "Unknown error"}",
-                cause
-            )
-        }
-
-        /**
-         * Creates an exception for audio reading failures.
-         *
-         * @param cause Underlying cause of the read failure
-         * @return Formatted exception with descriptive message
-         */
-        fun createReadFailure(cause: Throwable? = null): WSPRAudioSourceException
-        {
-            return WSPRAudioSourceException(
-                "Failed to read audio data from WSPR source. ${cause?.message ?: "Unknown error"}",
-                cause
-            )
-        }
-
-        /**
-         * Creates an exception for audio format compatibility issues.
-         *
-         * @param actualSampleRate Actual sample rate provided by source
-         * @param actualChannels Actual channel count provided by source
-         * @param actualBitDepth Actual bit depth provided by source
-         * @return Formatted exception describing the compatibility issue
-         */
-        fun createFormatIncompatibility(
-            actualSampleRate: Int,
-            actualChannels: Int,
-            actualBitDepth: Int
-        ): WSPRAudioSourceException
-        {
-            return WSPRAudioSourceException(
-                "Audio source format incompatible with WSPR requirements. " +
-                        "Required: ${WSPRConstants.WSPR_REQUIRED_SAMPLE_RATE}Hz, " +
-                        "${WSPRConstants.WSPR_REQUIRED_CHANNELS} channel, " +
-                        "${WSPRConstants.WSPR_REQUIRED_BIT_DEPTH}-bit. " +
-                        "Actual: ${actualSampleRate}Hz, ${actualChannels} channels, ${actualBitDepth}-bit."
-            )
-        }
-    }
 }
