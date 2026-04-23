@@ -71,40 +71,35 @@ object MFSKDecoder
             baseFrequencyHz + toneIndex * mode.toneSpacingHz
         }
 
-        val output      = ByteArray(byteCount)
-        var bitPosition = 0
-
-        for (symbolIndex in 0 until symbolCount)
-        {
-            // Slice exactly one symbol window from the sample buffer.
-            // copyOfRange allocates a new array; at 15.625 symbols/sec this is negligible.
-            // If profiling ever shows this as a bottleneck, GoertzelFilter could be extended
-            // to accept an offset+length into the full buffer instead.
+        val symbols = IntArray(symbolCount) { symbolIndex ->
             val windowStart = symbolIndex * samplesPerSymbol
             val window      = samples.copyOfRange(windowStart, windowStart + samplesPerSymbol)
-
-            // --- Run the Goertzel filter bank ---
-            val energies = DoubleArray(mode.toneCount) { toneIndex ->
+            val energies    = DoubleArray(mode.toneCount) { toneIndex ->
                 GoertzelFilter.energy(window, toneFrequencies[toneIndex], sampleRate)
             }
+            // !! is safe: maxByOrNull returns null only for empty collections,
+            // and toneCount is always >= 8 by MFSKMode's design.
+            energies.indices.maxByOrNull { energies[it] }!!
+        }
 
-            // Always pick the highest-energy tone as the symbol decision.
-            // !! is safe: maxByOrNull returns null only for empty collections, and
-            // toneCount is always >= 8 by MFSKMode's design.
-            val winnerToneIndex = energies.indices.maxByOrNull { energies[it] }!!
+        return reconstructBytes(symbols, byteCount, mode.bitsPerSymbol)
+    }
 
-            // --- Unpack bitsPerSymbol bits from the winner, MSB-first ---
-            // The encoder built toneIndex by shifting input bits in MSB-first, so reversing
-            // means extracting from the most significant bit of winnerToneIndex downward.
-            for (bitOffset in 0 until mode.bitsPerSymbol)
+    private fun reconstructBytes(symbols: IntArray, byteCount: Int, bitsPerSymbol: Int): ByteArray
+    {
+        val output      = ByteArray(byteCount)
+        val totalBits   = byteCount * 8
+        var bitPosition = 0
+
+        for (toneIndex in symbols)
+        {
+            for (bitOffset in 0 until bitsPerSymbol)
             {
-                // Stop exactly at the real data boundary — don't decode zero-padding bits.
                 if (bitPosition >= totalBits) break
 
-                val bitInSymbol = mode.bitsPerSymbol - 1 - bitOffset
-                val bit         = (winnerToneIndex ushr bitInSymbol) and 1
+                val bitInSymbol = bitsPerSymbol - 1 - bitOffset
+                val bit         = (toneIndex ushr bitInSymbol) and 1
 
-                // Place bit into the output byte at its MSB-first position.
                 val byteIndex = bitPosition / 8
                 val bitInByte = 7 - (bitPosition % 8)
 
@@ -112,7 +107,6 @@ object MFSKDecoder
                 {
                     output[byteIndex] = (output[byteIndex].toInt() or (1 shl bitInByte)).toByte()
                 }
-                // bit == 0: output bytes are zero-initialised by ByteArray constructor, no action needed.
 
                 bitPosition++
             }
