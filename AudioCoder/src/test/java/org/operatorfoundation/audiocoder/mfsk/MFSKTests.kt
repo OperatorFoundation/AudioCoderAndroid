@@ -4,7 +4,7 @@ import org.junit.Assert.*
 import org.junit.Test
 import kotlin.math.ceil
 
-class MFSKRoundTripTest
+class MFSKTests
 {
     companion object
     {
@@ -261,6 +261,28 @@ class MFSKRoundTripTest
         )
 
         assertArrayEquals("Payload round-trip should recover original data", data, decoded)
+    }
+
+    @Test
+    fun encodeToSymbols_mfsk16_matchesNibbleSplit()
+    {
+        val data = testData(8)
+
+        val expectedSymbols = IntArray(data.size * 2)
+        for (i in data.indices)
+        {
+            val byte = data[i].toInt() and 0xFF
+            expectedSymbols[i * 2]     = (byte ushr 4) and 0x0F
+            expectedSymbols[i * 2 + 1] = byte and 0x0F
+        }
+
+        assertArrayEquals(expectedSymbols, MFSKEncoder.encodeToSymbols(data, MFSKMode.MFSK16))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun encodeToSymbols_emptyData_throws()
+    {
+        MFSKEncoder.encodeToSymbols(ByteArray(0), MFSKMode.MFSK16)
     }
 
     // -------------------------------------------------------------------------

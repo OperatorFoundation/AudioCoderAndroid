@@ -53,11 +53,8 @@ object MFSKEncoder
         require(amplitude in 0.0..1.0)  { "amplitude must be in [0.0, 1.0], was $amplitude" }
 
         val samplesPerSymbol = mode.samplesPerSymbol(sampleRate)
-        val totalBits        = data.size * 8
-
-        // Round up so the final symbol is zero-padded if bits don't divide evenly.
-        val symbolCount = ceil(totalBits.toDouble() / mode.bitsPerSymbol).toInt()
-
+        val symbols = extractSymbols(data, mode)
+        val symbolCount = symbols.size
         val output = ShortArray(symbolCount * samplesPerSymbol)
 
         // Scale factor for PCM output. Sine is in [-1.0, 1.0], so this bounds
@@ -68,32 +65,9 @@ object MFSKEncoder
         // waveform is uninterrupted at tone transitions.
         var phase = 0.0
 
-        for (symbolIndex in 0 until symbolCount)
+        for (symbolIndex in symbols.indices)
         {
-            // --- Extract bitsPerSymbol bits from the stream, MSB-first ---
-            var toneIndex = 0
-            val startBit  = symbolIndex * mode.bitsPerSymbol
-
-            for (bitOffset in 0 until mode.bitsPerSymbol)
-            {
-                val bitPosition = startBit + bitOffset
-
-                val bit = if (bitPosition < totalBits)
-                {
-                    // MSB-first: bit 7 of each byte is the first bit out.
-                    // ushr (logical shift) is used instead of shr (arithmetic shift) to
-                    // avoid sign-extension corrupting the bit value for bytes ≥ 128.
-                    val byteIndex = bitPosition / 8
-                    val bitInByte = 7 - (bitPosition % 8)
-                    (data[byteIndex].toInt() ushr bitInByte) and 1
-                }
-                else
-                {
-                    0 // Zero-pad the incomplete final symbol
-                }
-
-                toneIndex = (toneIndex shl 1) or bit
-            }
+            val toneIndex = symbols[symbolIndex]
 
             // --- Generate samples for this symbol's tone ---
             val toneFrequencyHz = baseFrequencyHz + toneIndex * mode.toneSpacingHz
@@ -116,5 +90,46 @@ object MFSKEncoder
         }
 
         return output
+    }
+
+    fun encodeToSymbols(data: ByteArray, mode: MFSKMode): IntArray
+    {
+        require(data.isNotEmpty()) { "data must not be empty" }
+        return extractSymbols(data, mode)
+    }
+
+    private fun extractSymbols(data: ByteArray, mode: MFSKMode): IntArray
+    {
+        val totalBits   = data.size * 8
+        val symbolCount = ceil(totalBits.toDouble() / mode.bitsPerSymbol).toInt()
+        val symbols     = IntArray(symbolCount)
+
+        for (symbolIndex in 0 until symbolCount)
+        {
+            var toneIndex = 0
+            val startBit  = symbolIndex * mode.bitsPerSymbol
+
+            for (bitOffset in 0 until mode.bitsPerSymbol)
+            {
+                val bitPosition = startBit + bitOffset
+
+                val bit = if (bitPosition < totalBits)
+                {
+                    val byteIndex = bitPosition / 8
+                    val bitInByte = 7 - (bitPosition % 8)
+                    (data[byteIndex].toInt() ushr bitInByte) and 1
+                }
+                else
+                {
+                    0
+                }
+
+                toneIndex = (toneIndex shl 1) or bit
+            }
+
+            symbols[symbolIndex] = toneIndex
+        }
+
+        return symbols
     }
 }
