@@ -54,7 +54,7 @@ sealed class MFSKMode(
     /**
      * MFSK-16: 16 tones, 15.625 baud, 250 Hz bandwidth.
      * The most common MFSK mode. Same baud rate as [MFSK8] but carries 4 bits per symbol
-     * instead of 3. Primary target mode for Nahoft.
+     * instead of 3.
      */
     object MFSK16 : MFSKMode(
         toneCount      = 16,
@@ -164,4 +164,27 @@ sealed class MFSKMode(
     // -------------------------------------------------------------------------
 
     override fun toString(): String = label
+
+    // -------------------------------------------------------------------------
+    // Serialization helpers
+    // -------------------------------------------------------------------------
+
+    companion object
+    {
+        /**
+         * Returns the [MFSKMode] corresponding to [label], or null if no match.
+         *
+         * [label] must match the format produced by [MFSKMode.label] — e.g. `"MFSK-16"`.
+         * Use this to reconstruct a mode from an Intent extra or other string representation.
+         */
+        fun fromLabel(label: String): MFSKMode? = when (label)
+        {
+            MFSK8.label   -> MFSK8
+            MFSK16.label  -> MFSK16
+            MFSK32.label  -> MFSK32
+            MFSK64.label  -> MFSK64
+            MFSK128.label -> MFSK128
+            else          -> null
+        }
+    }
 }
