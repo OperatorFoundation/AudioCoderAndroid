@@ -157,7 +157,7 @@ sealed class MFSKMode(
      * @param sampleRate Audio pipeline sample rate in Hz (e.g. 12000).
      * @return Sample count per symbol at the given rate.
      */
-    fun samplesPerSymbol(sampleRate: Int): Int = (sampleRate / baudRate).roundToInt()
+    fun samplesPerSymbol(sampleRate: Int): Int = (sampleRate / baudRate).toInt()
 
     // -------------------------------------------------------------------------
     // Standard overrides

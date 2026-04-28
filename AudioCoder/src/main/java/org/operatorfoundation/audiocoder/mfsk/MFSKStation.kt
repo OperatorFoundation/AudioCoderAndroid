@@ -1,9 +1,9 @@
 package org.operatorfoundation.audiocoder.mfsk
 
+import java.util.Base64
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.time.Instant
-import kotlin.math.ceil
 
 /**
  * Streaming MFSK receive/transmit station.
@@ -12,10 +12,12 @@ import kotlin.math.ceil
  * continuously decoding the incoming audio stream, and emitting completed messages.
  *
  * ## Framing
- * Every message is prefixed with a 2-byte big-endian unsigned length field, written and
- * read by [encode] and the receive loop respectively. This allows the decoder to know how
- * many payload bytes to accumulate before emitting a message. The maximum frameable payload
- * is 65,535 bytes — well above any practical MFSK message over HF or VHF.
+ * Messages are framed as `<base64(payload)>` and Varicode-encoded before transmission.
+ * This produces standard MFSK-16 text traffic decodable by any compliant receiver.
+ * The framing scheme is an implementation detail of this class —
+ * callers receive and supply raw bytes only.
+ *
+ * Use [framePayload] to prepare bytes for transmission via external hardware TX paths.
  *
  * ## Threading
  * The receive loop runs on [Dispatchers.IO] in an internally owned coroutine. All state
@@ -30,8 +32,8 @@ import kotlin.math.ceil
  * [stop] is the only intended shutdown path. It cancels the internal coroutine and calls
  * [MFSKAudioSource.cleanup], guaranteeing the audio source is left in a clean state.
  *
- * @param audioSource     Audio source providing 16-bit PCM at [MFSKConfiguration.sampleRate].
- * @param configuration   Mode, frequency, and timing parameters for this session.
+ * @param audioSource   Audio source providing 16-bit PCM at [MFSKConfiguration.sampleRate].
+ * @param configuration Mode, frequency, and timing parameters for this session.
  */
 class MFSKStation(
     private val audioSource: MFSKAudioSource,
@@ -52,14 +54,37 @@ class MFSKStation(
         configuration.baseFrequencyHz + i * configuration.mode.toneSpacingHz
     }
 
-    // Samples needed to carry the 2-byte (UShort) length prefix.
-    private val prefixSymbolCount = ceil(16.0 / configuration.mode.bitsPerSymbol).toInt()
-    private val prefixSampleCount = prefixSymbolCount * samplesPerSymbol
-
-    // Chunk size for readAudioChunk calls — one symbol period, at least 1ms.
+    // Duration of one symbol in ms — minimum 1ms to avoid zero-length read requests.
     private val symbolDurationMs = (configuration.mode.symbolDurationSeconds * 1000)
         .toLong()
         .coerceAtLeast(1L)
+
+    // -------------------------------------------------------------------------
+    // Companion object
+    // -------------------------------------------------------------------------
+
+    companion object
+    {
+        private const val FRAME_START = '<'
+        private const val FRAME_END   = '>'
+
+        /**
+         * Frames [data] for MFSK transmission as `<base64(data)>`.
+         *
+         * The returned string is pure ASCII and suitable for direct input to
+         * [MFSKEncoder.encode] or [MFSKEncoder.encodeToSymbols]. Both the transmit
+         * path through this station and external hardware TX paths must apply this
+         * framing before encoding.
+         *
+         * @param data Raw bytes to frame (e.g. ciphertext).
+         * @return Framed ASCII string ready for Varicode encoding.
+         */
+        fun framePayload(data: ByteArray): String
+        {
+            val base64 = Base64.getEncoder().encodeToString(data)
+            return "$FRAME_START$base64$FRAME_END"
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Public API
@@ -68,7 +93,7 @@ class MFSKStation(
     /**
      * Initializes the audio source and starts the receive loop.
      *
-     * Idempotent — calling [start] on an already-running station returns success immediately
+     * Idempotent - calling [start] on an already-running station returns success immediately
      * without reinitializing the audio source or restarting the loop.
      *
      * @return Success if the station started (or was already running),
@@ -116,29 +141,22 @@ class MFSKStation(
     }
 
     /**
-     * Encodes [data] as MFSK audio with a 2-byte big-endian length prefix prepended.
+     * Encodes [data] as a framed MFSK audio signal ready for transmission.
      *
-     * The returned PCM samples are ready for transmission. This method does not require
-     * the station to be started — it is pure computation with no lifecycle dependency.
+     * Applies [framePayload] framing, Varicode-encodes the result, then modulates
+     * as PCM audio. The returned samples are decodable by any compliant MFSK-16
+     * receiver.
      *
-     * @param data Payload bytes to encode. Must not exceed 65,535 bytes.
+     * This method does not require the station to be started — it is pure
+     * computation with no lifecycle dependency.
+     *
+     * @param data Raw bytes to encode.
      * @return 16-bit PCM samples representing the framed MFSK signal.
      */
     fun encode(data: ByteArray): ShortArray
     {
-        require(data.size <= UShort.MAX_VALUE.toInt()) {
-            "data length ${data.size} exceeds maximum frameable size of ${UShort.MAX_VALUE}"
-        }
-
-        // Length prefix: 2 bytes, big-endian — consistent with MSB-first bit ordering used
-        // throughout the encoder and decoder.
-        val lengthPrefix = byteArrayOf(
-            (data.size ushr 8).toByte(),
-            (data.size and 0xFF).toByte()
-        )
-
         return MFSKEncoder.encode(
-            data            = lengthPrefix + data,
+            text            = framePayload(data),
             mode            = configuration.mode,
             baseFrequencyHz = configuration.baseFrequencyHz,
             sampleRate      = configuration.sampleRate,
@@ -152,77 +170,94 @@ class MFSKStation(
 
     private suspend fun executeReceiveLoop()
     {
+        val varicodeDecoder = Varicode.Decoder()
+        val payloadBuffer   = StringBuilder()
+        var insideFrame     = false
+
         try
         {
-            // currentCoroutineContext().isActive is used rather than isActive because
-            // isActive is an extension on CoroutineScope and is not directly accessible
-            // inside a suspend function.
             while (currentCoroutineContext().isActive)
             {
                 try
                 {
                     withTimeout(configuration.timeoutMs)
                     {
-                        // Phase 1: decode the 2-byte length prefix.
-                        val prefixBytes = MFSKDecoder.decode(
-                            samples         = accumulateSamples(prefixSampleCount),
-                            mode            = configuration.mode,
-                            baseFrequencyHz = configuration.baseFrequencyHz,
-                            sampleRate      = configuration.sampleRate,
-                            byteCount       = 2
-                        )
+                        // Accumulate exactly one symbol period of audio.
+                        val samples = accumulateSamples(samplesPerSymbol)
 
-                        // Reconstruct big-endian UShort. The `and 0xFF` mask is required
-                        // because Kotlin Byte is signed — bytes >= 128 without the mask
-                        // would sign-extend to negative Int values when shifted, corrupting
-                        // the reconstructed length.
-                        val messageLength = ((prefixBytes[0].toInt() and 0xFF) shl 8) or
-                                (prefixBytes[1].toInt() and 0xFF)
-
-                        // A zero-length decode indicates noise rather than a real transmission.
-                        // Flush and retry rather than attempting to accumulate zero payload
-                        // samples, which would busy-loop indefinitely.
-                        if (messageLength == 0)
-                        {
-                            audioSource.flushBuffer()
-                            return@withTimeout
+                        // Run Goertzel filter bank, pick the highest-energy tone.
+                        val energies        = DoubleArray(configuration.mode.toneCount) { i ->
+                            GoertzelFilter.energy(samples, toneFrequencies[i], configuration.sampleRate)
                         }
+                        // maxByOrNull is safe, toneCount is always >= 8 by MFSKMode's design.
+                        val winnerToneIndex = energies.indices.maxByOrNull { energies[it] }!!
 
-                        // Phase 2: decode the payload.
-                        val payloadSampleCount = ceil(
-                            messageLength * 8.0 / configuration.mode.bitsPerSymbol
-                        ).toInt() * samplesPerSymbol
+                        // Extract bitsPerSymbol bits from the winner, MSB-first,
+                        // and feed each into the Varicode decoder.
+                        for (bitOffset in 0 until configuration.mode.bitsPerSymbol)
+                        {
+                            val bitInSymbol = configuration.mode.bitsPerSymbol - 1 - bitOffset
+                            val bit         = ((winnerToneIndex ushr bitInSymbol) and 1) == 1
 
-                        val payloadBytes = MFSKDecoder.decode(
-                            samples         = accumulateSamples(payloadSampleCount),
-                            mode            = configuration.mode,
-                            baseFrequencyHz = configuration.baseFrequencyHz,
-                            sampleRate      = configuration.sampleRate,
-                            byteCount       = messageLength
-                        )
+                            val decodedChar = varicodeDecoder.feed(bit) ?: continue
 
-                        _messages.emit(MFSKMessage(
-                            data       = payloadBytes,
-                            receivedAt = Instant.now(),
-                            mode       = configuration.mode
-                        ))
+                            when
+                            {
+                                decodedChar == FRAME_START ->
+                                {
+                                    // Start of a new frame, reset any partial payload
+                                    // from a previous incomplete or corrupted transmission.
+                                    payloadBuffer.clear()
+                                    insideFrame = true
+                                }
 
-                        // Flush before the next accumulation to prevent tail samples from
-                        // the just-received transmission corrupting the next symbol boundary.
-                        audioSource.flushBuffer()
+                                decodedChar == FRAME_END && insideFrame ->
+                                {
+                                    // End of frame, attempt base64 decode and emit.
+                                    insideFrame = false
+                                    val base64   = payloadBuffer.toString()
+                                    payloadBuffer.clear()
+
+                                    try
+                                    {
+                                        val bytes = Base64.getDecoder().decode(base64)
+                                        _messages.emit(
+                                            MFSKMessage(
+                                                data       = bytes,
+                                                receivedAt = Instant.now(),
+                                                mode       = configuration.mode
+                                            )
+                                        )
+                                        audioSource.flushBuffer()
+                                    }
+                                    catch (e: IllegalArgumentException)
+                                    {
+                                        // Malformed base64, discard and continue listening.
+                                        // This can happen if the signal was corrupted mid-frame.
+                                    }
+                                }
+
+                                insideFrame ->
+                                {
+                                    payloadBuffer.append(decodedChar)
+                                }
+                            }
+                        }
                     }
                 }
                 catch (e: TimeoutCancellationException)
                 {
-                    // Timeout waiting for a complete message. Not fatal — flush and retry.
-                    // The station remains in Listening state.
+                    // Timeout with no complete message, reset state and retry.
+                    varicodeDecoder.reset()
+                    payloadBuffer.clear()
+                    insideFrame = false
                     audioSource.flushBuffer()
                 }
             }
         }
         catch (e: CancellationException)
         {
-            // Normal shutdown via stop(). Rethrow so the coroutine machinery cleans up correctly.
+            // Normal shutdown via stop(). Rethrow so coroutine machinery cleans up correctly.
             throw e
         }
         catch (e: Exception)
@@ -239,9 +274,9 @@ class MFSKStation(
      * Reads from [audioSource] in symbol-sized chunks until exactly [sampleCount] samples
      * have been accumulated.
      *
-     * Samples from oversized chunks are discarded to maintain symbol alignment. If the
-     * audio source returns an empty chunk (buffer underrun), a short delay prevents
-     * busy-waiting while the source catches up.
+     * If the audio source returns an empty chunk (buffer underrun), a short delay prevents
+     * busy-waiting while the source catches up. Excess samples from oversized chunks are
+     * discarded to maintain symbol alignment.
      *
      * @param sampleCount Exact number of samples to accumulate.
      * @return Fully populated [ShortArray] of length [sampleCount].
@@ -257,7 +292,6 @@ class MFSKStation(
 
             if (chunk.isEmpty())
             {
-                // Source has nothing yet — yield briefly to avoid spinning.
                 delay(10)
                 continue
             }
