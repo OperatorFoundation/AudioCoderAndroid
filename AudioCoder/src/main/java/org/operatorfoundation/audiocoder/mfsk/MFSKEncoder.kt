@@ -146,7 +146,7 @@ object MFSKEncoder
                 toneIndex = (toneIndex shl 1) or (if (bit) 1 else 0)
             }
 
-            symbols[symbolIndex] = toneIndex
+            symbols[symbolIndex] = toneIndex xor (toneIndex shr 1)
         }
 
         return symbols

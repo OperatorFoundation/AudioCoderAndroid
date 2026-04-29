@@ -189,8 +189,10 @@ class MFSKStation(
                         val energies        = DoubleArray(configuration.mode.toneCount) { i ->
                             GoertzelFilter.energy(samples, toneFrequencies[i], configuration.sampleRate)
                         }
+
                         // maxByOrNull is safe, toneCount is always >= 8 by MFSKMode's design.
-                        val winnerToneIndex = energies.indices.maxByOrNull { energies[it] }!!
+                        val rawToneIndex    = energies.indices.maxByOrNull { energies[it] }!!
+                        val winnerToneIndex = grayDecode(rawToneIndex)
 
                         // Extract bitsPerSymbol bits from the winner, MSB-first,
                         // and feed each into the Varicode decoder.
@@ -302,5 +304,18 @@ class MFSKStation(
         }
 
         return buffer
+    }
+
+    private fun grayDecode(gray: Int): Int
+    {
+        var n = gray
+        var mask = n shr 1
+
+        while (mask != 0) {
+            n = n xor mask
+            mask = mask shr 1
+        }
+
+        return n
     }
 }
