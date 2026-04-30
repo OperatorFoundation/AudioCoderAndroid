@@ -1,321 +1,776 @@
 package org.operatorfoundation.audiocoder.mfsk
 
-import java.util.Base64
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.time.Instant
+import kotlin.math.*
 
 /**
- * Streaming MFSK receive/transmit station.
+ * Streaming MFSK-16 receive station.
  *
- * Manages the full lifecycle of an MFSK audio session: initializing the audio source,
- * continuously decoding the incoming audio stream, and emitting completed messages.
+ * Consumes a [Flow<ShortArray>] of 16-bit PCM audio and emits [MFSKMessage] for each
+ * complete text frame (CR STX CR ... data ... CR EOT CR) decoded from the signal.
  *
- * ## Framing
- * Messages are framed as `<base64(payload)>` and Varicode-encoded before transmission.
- * This produces standard MFSK-16 text traffic decodable by any compliant receiver.
- * The framing scheme is an implementation detail of this class —
- * callers receive and supply raw bytes only.
- *
- * Use [framePayload] to prepare bytes for transmission via external hardware TX paths.
+ * ## Receive pipeline (per audio sample, mirroring fldigi's rx_process)
+ * ```
+ * raw sample
+ *   → HilbertFilter       — real → complex analytic signal
+ *   → Mixer               — shift signal to fixed reference frequency
+ *   → BandpassFilter      — remove out-of-band interference
+ *   → SlidingDFT          — compute per-tone complex energies, fill pipe buffer
+ *   → (every samplesPerSymbol samples):
+ *       → harddecode       — pick highest-energy tone, update CWI and AFC metrics
+ *       → softdecode       — form 4 soft-decision bytes, de-interleave
+ *       → decodesymbol ×4 — dual Viterbi FEC decode, gated by symcounter
+ *       → recvbit          — IZ8BLY Varicode shift-register decode
+ *       → handleCharacter  — frame detection (STX/EOT), emit MFSKMessage on complete frame
+ *       → synchronize      — adjust symbol clock using pipe buffer energy profile
+ *       → afc              — track carrier frequency drift using complex phase
+ * ```
  *
  * ## Threading
- * The receive loop runs on [Dispatchers.IO] in an internally owned coroutine. All state
- * transitions and message emissions are safe to observe from any coroutine context.
- * [start] and [stop] are suspend functions and must be called from a coroutine.
+ * The receive loop runs on [Dispatchers.IO]. All state is confined to that coroutine.
+ * [stationState] and [receivedMessages] are safe to observe from any coroutine context.
  *
  * ## Lifecycle
- * ```
- * Idle → Starting → Listening → Idle      (clean stop)
- *                 → Error                 (unrecoverable failure)
- * ```
- * [stop] is the only intended shutdown path. It cancels the internal coroutine and calls
- * [MFSKAudioSource.cleanup], guaranteeing the audio source is left in a clean state.
+ * Idle → Listening (on [start]) → Idle (on [stop] or unrecoverable error).
  *
- * @param audioSource   Audio source providing 16-bit PCM at [MFSKConfiguration.sampleRate].
- * @param configuration Mode, frequency, and timing parameters for this session.
+ * @param audioStream   Flow of raw PCM audio chunks at [MFSKConfiguration.sampleRate].
+ * @param configuration Mode, base frequency, and timing parameters for this session.
  */
 class MFSKStation(
-    private val audioSource: MFSKAudioSource,
+    private val audioStream: Flow<ShortArray>,
     private val configuration: MFSKConfiguration
 )
 {
+    // =========================================================================
+    // Observable state
+    // =========================================================================
+
     private val _stationState = MutableStateFlow<MFSKStationState>(MFSKStationState.Idle)
     val stationState: StateFlow<MFSKStationState> = _stationState.asStateFlow()
 
-    private val _messages = MutableSharedFlow<MFSKMessage>(replay = 0)
-    val messages: SharedFlow<MFSKMessage> = _messages.asSharedFlow()
+    private val _receivedMessages = MutableSharedFlow<MFSKMessage>(replay = 0)
+    val receivedMessages: SharedFlow<MFSKMessage> = _receivedMessages.asSharedFlow()
 
     private var stationJob: Job? = null
 
-    // Precomputed from configuration — constant for the lifetime of this station instance.
-    private val samplesPerSymbol = configuration.mode.samplesPerSymbol(configuration.sampleRate)
-    private val toneFrequencies  = DoubleArray(configuration.mode.toneCount) { i ->
-        configuration.baseFrequencyHz + i * configuration.mode.toneSpacingHz
+    // =========================================================================
+    // Derived configuration — computed once from MFSKConfiguration
+    // =========================================================================
+
+    private val mode               = configuration.mode
+    private val sampleRate         = configuration.sampleRate
+    private val samplesPerSymbol   = mode.samplesPerSymbol(sampleRate)
+    private val toneCount          = mode.toneCount
+    private val bitsPerSymbol      = mode.bitsPerSymbol
+
+    // Tone spacing = sample rate / samples-per-symbol = baud rate (Hz).
+    // Equals mode.baudRate but computed from the actual sample rate for precision.
+    private val toneSpacingHz      = sampleRate.toDouble() / samplesPerSymbol
+
+    // Base tone index: which DFT bin corresponds to tone 0.
+    // Quantized so the tone frequencies fall exactly on DFT bin boundaries.
+    private val baseToneIndex      = (configuration.baseFrequencyHz / toneSpacingHz).roundToInt()
+
+    // Actual base frequency after quantization (may differ slightly from configured).
+    private val quantizedBaseFreqHz = baseToneIndex * toneSpacingHz
+
+    // Total occupied bandwidth of the MFSK signal (Hz).
+    private val bandwidth          = (toneCount - 1) * toneSpacingHz
+
+    // Bandpass filter cutoffs (normalized, fraction of sample rate).
+    // Coverage: tone 0 down to 2 spacings below, tone N-1 up to 2 spacings above.
+    // Matches fldigi's bpfilt computation in the mfsk constructor.
+    private val centerFreqHz       = quantizedBaseFreqHz + bandwidth / 2.0
+    private val bpFilterLowCutoff  = (centerFreqHz - bandwidth / 2.0 - 2.0 * toneSpacingHz) / sampleRate
+    private val bpFilterHighCutoff = (centerFreqHz + bandwidth / 2.0 + 2.0 * toneSpacingHz) / sampleRate
+
+    // =========================================================================
+    // DSP pipeline components — stateful, reset on each session start
+    // =========================================================================
+
+    private val hilbertFilter  = HilbertFilter()
+    private val bandpassFilter = BandpassFilter(bpFilterLowCutoff, bpFilterHighCutoff)
+    private val slidingDFT     = SlidingDFT(samplesPerSymbol, baseToneIndex, baseToneIndex + toneCount)
+
+    // Interleaver (receive direction — pre-filled with PUNCTURE = 128).
+    private val rxInterleaver = MFSKInterleaver.createForReceive(
+        size  = bitsPerSymbol,
+        depth = MFSKEncoder.INTERLEAVER_DEPTH
+    )
+
+    // Viterbi decoders.
+    // dec1 and dec2 mirror fldigi's dual-decoder scheme:
+    //   - Even bitsPerSymbol (MFSK-16: 4): only dec2 is used (symcounter gate).
+    //   - Odd bitsPerSymbol (MFSK-8: 3, MFSK-32: 5): both are used with metric comparison.
+    private val viterbiDecoder1 = ViterbiDecoder(
+        ConvolutionalEncoder.CONSTRAINT_LENGTH,
+        ConvolutionalEncoder.GENERATOR_POLY_1,
+        ConvolutionalEncoder.GENERATOR_POLY_2
+    ).apply {
+        setTraceback(ViterbiDecoder.MFSK_TRACEBACK)
+        setChunkSize(ViterbiDecoder.MFSK_CHUNK_SIZE)
+    }
+    private val viterbiDecoder2 = ViterbiDecoder(
+        ConvolutionalEncoder.CONSTRAINT_LENGTH,
+        ConvolutionalEncoder.GENERATOR_POLY_1,
+        ConvolutionalEncoder.GENERATOR_POLY_2
+    ).apply {
+        setTraceback(ViterbiDecoder.MFSK_TRACEBACK)
+        setChunkSize(ViterbiDecoder.MFSK_CHUNK_SIZE)
     }
 
-    // Duration of one symbol in ms — minimum 1ms to avoid zero-length read requests.
-    private val symbolDurationMs = (configuration.mode.symbolDurationSeconds * 1000)
-        .toLong()
-        .coerceAtLeast(1L)
+    private val varicodeDecoder = Varicode.Decoder()
 
-    // -------------------------------------------------------------------------
-    // Companion object
-    // -------------------------------------------------------------------------
+    // Moving average filter for symbol sync (length 8, matches fldigi's Cmovavg(8)).
+    private val syncFilter = MovingAverage(8)
 
-    companion object
-    {
-        private const val FRAME_START = '<'
-        private const val FRAME_END   = '>'
+    // =========================================================================
+    // Per-session mutable state — reset on each session start
+    // =========================================================================
 
-        /**
-         * Frames [data] for MFSK transmission as `<base64(data)>`.
-         *
-         * The returned string is pure ASCII and suitable for direct input to
-         * [MFSKEncoder.encode] or [MFSKEncoder.encodeToSymbols]. Both the transmit
-         * path through this station and external hardware TX paths must apply this
-         * framing before encoding.
-         *
-         * @param data Raw bytes to frame (e.g. ciphertext).
-         * @return Framed ASCII string ready for Varicode encoding.
-         */
-        fun framePayload(data: ByteArray): String
-        {
-            val base64 = Base64.getEncoder().encodeToString(data)
-            return "$FRAME_START$base64$FRAME_END"
-        }
-    }
+    // Mixer: current carrier frequency (Hz) and accumulated phase.
+    // Starts at the center of the MFSK band. AFC updates currentFrequencyHz over time.
+    private var currentFrequencyHz = configuration.baseFrequencyHz + bandwidth / 2.0
+    private var mixerPhaseAccumulator = 0.0
 
-    // -------------------------------------------------------------------------
-    // Public API
-    // -------------------------------------------------------------------------
+    // Symbol timing: counts samples until the next symbol decision.
+    private var sampleCountdown = samplesPerSymbol
+
+    // Current and previous tone decisions (indices into [0, toneCount)).
+    private var currentSymbol  = 0
+    private var prevSymbol1    = 0
+    private var prevSymbol2    = 0
+
+    // Complex DFT vector for the current and previous symbol (for AFC).
+    // Indices [0]=real, [1]=imag.
+    private val currentVectorBuf  = DoubleArray(2)
+    private val prevVector1Buf    = DoubleArray(2)
+
+    // Symbol counter for the dual-Viterbi gate.
+    // Alternates 0 ↔ 1. For even bitsPerSymbol, only symcounter==0 invokes the decoder.
+    private var symcounter = 0
+
+    // Sliding symbol pair fed to the Viterbi decoders.
+    // symbolPair[0] = previous soft byte, symbolPair[1] = current soft byte.
+    private val symbolPair = ByteArray(2)
+
+    // Exponential-decay Viterbi metric accumulators (for dual-decoder metric comparison).
+    private var met1 = 0.0
+    private var met2 = 0.0
+
+    // Scaled signal quality metric (for squelch comparison).
+    private var signalMetric = 0.0
+
+    // AFC state.
+    private var freqErr    = 0.0   // exponential average frequency error (Hz)
+    private var afcMetric  = 0.0   // AFC confidence: only adjust freq when this is high enough
+
+    // CWI (Continuous Wave Interference) detection counters — one per tone bin.
+    // Tracks how many consecutive symbol periods each tone has been the dominant one.
+    // Tones that repeatedly win are considered CW interferers and are soft-punctured.
+    private val cwiCounters = IntArray(toneCount)
+
+    // Whether the most recent symbol period showed a static noise burst (all tones active).
+    private var staticBurst = false
+
+    // Frame detection state.
+    private val frameBuffer = StringBuilder()
+    private var insideFrame = false
+
+    // Reusable arrays for bin values (allocated once, reused every symbol).
+    private val currentBinsReal = DoubleArray(toneCount)
+    private val currentBinsImag = DoubleArray(toneCount)
+
+    // Metric result array — single-element, passed to ViterbiDecoder.decode().
+    private val metricResult = IntArray(1)
+
+    // =========================================================================
+    // Lifecycle
+    // =========================================================================
 
     /**
-     * Initializes the audio source and starts the receive loop.
-     *
-     * Idempotent - calling [start] on an already-running station returns success immediately
-     * without reinitializing the audio source or restarting the loop.
-     *
-     * @return Success if the station started (or was already running),
-     *         Failure if audio source initialization failed.
+     * Starts the receive loop and begins decoding the audio stream.
+     * Idempotent: calling while already running returns success immediately.
      */
     suspend fun start(): Result<Unit>
     {
         if (stationJob?.isActive == true) return Result.success(Unit)
 
-        _stationState.value = MFSKStationState.Starting
-
-        val initResult = audioSource.initialize()
-        if (initResult.isFailure)
-        {
-            val cause = initResult.exceptionOrNull()
-                ?: Exception("Audio source initialization failed")
-            _stationState.value = MFSKStationState.Error(cause)
-            return Result.failure(cause)
-        }
+        resetSessionState()
+        _stationState.value = MFSKStationState.Listening
 
         stationJob = CoroutineScope(Dispatchers.IO + Job()).launch {
-            // State is set to Listening inside the coroutine rather than in start() to avoid
-            // a race where a fast failure inside the coroutine sets Error, then start()
-            // overwrites it with Listening after the fact.
-            _stationState.value = MFSKStationState.Listening
-            executeReceiveLoop()
+            try
+            {
+                audioStream.collect { chunk -> processChunk(chunk) }
+            }
+            catch (e: CancellationException)
+            {
+                throw e
+            }
+            catch (e: Exception)
+            {
+                _stationState.value = MFSKStationState.Error(e)
+            }
+            finally
+            {
+                _stationState.value = MFSKStationState.Idle
+            }
         }
 
         return Result.success(Unit)
     }
 
     /**
-     * Stops the receive loop and cleans up the audio source.
-     *
-     * Blocks until the coroutine has fully stopped before calling [MFSKAudioSource.cleanup],
-     * ensuring the audio source is never cleaned up while a decode is in progress.
+     * Stops the receive loop. Blocks until the coroutine has fully stopped.
      */
     suspend fun stop()
     {
         stationJob?.cancel()
         stationJob?.join()
         stationJob = null
-        audioSource.cleanup()
         _stationState.value = MFSKStationState.Idle
     }
 
-    /**
-     * Encodes [data] as a framed MFSK audio signal ready for transmission.
-     *
-     * Applies [framePayload] framing, Varicode-encodes the result, then modulates
-     * as PCM audio. The returned samples are decodable by any compliant MFSK-16
-     * receiver.
-     *
-     * This method does not require the station to be started — it is pure
-     * computation with no lifecycle dependency.
-     *
-     * @param data Raw bytes to encode.
-     * @return 16-bit PCM samples representing the framed MFSK signal.
-     */
-    fun encode(data: ByteArray): ShortArray
-    {
-        return MFSKEncoder.encode(
-            text            = framePayload(data),
-            mode            = configuration.mode,
-            baseFrequencyHz = configuration.baseFrequencyHz,
-            sampleRate      = configuration.sampleRate,
-            amplitude       = configuration.amplitude
-        )
-    }
-
-    // -------------------------------------------------------------------------
-    // Receive loop
-    // -------------------------------------------------------------------------
-
-    private suspend fun executeReceiveLoop()
-    {
-        val varicodeDecoder = Varicode.Decoder()
-        val payloadBuffer   = StringBuilder()
-        var insideFrame     = false
-
-        try
-        {
-            while (currentCoroutineContext().isActive)
-            {
-                try
-                {
-                    withTimeout(configuration.timeoutMs)
-                    {
-                        // Accumulate exactly one symbol period of audio.
-                        val samples = accumulateSamples(samplesPerSymbol)
-
-                        // Run Goertzel filter bank, pick the highest-energy tone.
-                        val energies        = DoubleArray(configuration.mode.toneCount) { i ->
-                            GoertzelFilter.energy(samples, toneFrequencies[i], configuration.sampleRate)
-                        }
-
-                        // maxByOrNull is safe, toneCount is always >= 8 by MFSKMode's design.
-                        val rawToneIndex    = energies.indices.maxByOrNull { energies[it] }!!
-                        val winnerToneIndex = grayDecode(rawToneIndex)
-
-                        // Extract bitsPerSymbol bits from the winner, MSB-first,
-                        // and feed each into the Varicode decoder.
-                        for (bitOffset in 0 until configuration.mode.bitsPerSymbol)
-                        {
-                            val bitInSymbol = configuration.mode.bitsPerSymbol - 1 - bitOffset
-                            val bit         = ((winnerToneIndex ushr bitInSymbol) and 1) == 1
-
-                            val decodedChar = varicodeDecoder.feed(bit) ?: continue
-
-                            when
-                            {
-                                decodedChar == FRAME_START ->
-                                {
-                                    // Start of a new frame, reset any partial payload
-                                    // from a previous incomplete or corrupted transmission.
-                                    payloadBuffer.clear()
-                                    insideFrame = true
-                                }
-
-                                decodedChar == FRAME_END && insideFrame ->
-                                {
-                                    // End of frame, attempt base64 decode and emit.
-                                    insideFrame = false
-                                    val base64   = payloadBuffer.toString()
-                                    payloadBuffer.clear()
-
-                                    try
-                                    {
-                                        val bytes = Base64.getDecoder().decode(base64)
-                                        _messages.emit(
-                                            MFSKMessage(
-                                                data       = bytes,
-                                                receivedAt = Instant.now(),
-                                                mode       = configuration.mode
-                                            )
-                                        )
-                                        audioSource.flushBuffer()
-                                    }
-                                    catch (e: IllegalArgumentException)
-                                    {
-                                        // Malformed base64, discard and continue listening.
-                                        // This can happen if the signal was corrupted mid-frame.
-                                    }
-                                }
-
-                                insideFrame ->
-                                {
-                                    payloadBuffer.append(decodedChar)
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (e: TimeoutCancellationException)
-                {
-                    // Timeout with no complete message, reset state and retry.
-                    varicodeDecoder.reset()
-                    payloadBuffer.clear()
-                    insideFrame = false
-                    audioSource.flushBuffer()
-                }
-            }
-        }
-        catch (e: CancellationException)
-        {
-            // Normal shutdown via stop(). Rethrow so coroutine machinery cleans up correctly.
-            throw e
-        }
-        catch (e: Exception)
-        {
-            _stationState.value = MFSKStationState.Error(e)
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Audio accumulation
-    // -------------------------------------------------------------------------
+    // =========================================================================
+    // Audio chunk processing
+    // =========================================================================
 
     /**
-     * Reads from [audioSource] in symbol-sized chunks until exactly [sampleCount] samples
-     * have been accumulated.
-     *
-     * If the audio source returns an empty chunk (buffer underrun), a short delay prevents
-     * busy-waiting while the source catches up. Excess samples from oversized chunks are
-     * discarded to maintain symbol alignment.
-     *
-     * @param sampleCount Exact number of samples to accumulate.
-     * @return Fully populated [ShortArray] of length [sampleCount].
+     * Processes one chunk of PCM audio. Each Short sample is fed individually
+     * through the DSP pipeline. Symbol decisions are made every [samplesPerSymbol] samples.
      */
-    private suspend fun accumulateSamples(sampleCount: Int): ShortArray
+    private suspend fun processChunk(chunk: ShortArray)
     {
-        val buffer      = ShortArray(sampleCount)
-        var accumulated = 0
-
-        while (accumulated < sampleCount)
+        for (sample in chunk)
         {
-            val chunk = audioSource.readAudioChunk(symbolDurationMs)
-
-            if (chunk.isEmpty())
-            {
-                delay(10)
-                continue
-            }
-
-            val copyCount = minOf(chunk.size, sampleCount - accumulated)
-            chunk.copyInto(buffer, accumulated, 0, copyCount)
-            accumulated += copyCount
+            processSample(sample.toDouble())
         }
-
-        return buffer
     }
 
+    /**
+     * Processes one audio sample through the full DSP chain.
+     *
+     * Matches fldigi's per-sample body of rx_process():
+     *   create analytic signal → mix → bandpass → update sliding DFT →
+     *   (on symbol boundary) make symbol decision
+     */
+    private suspend fun processSample(rawSample: Double)
+    {
+        // Step 1: Hilbert filter — real input → complex analytic signal.
+        val hilbertOutReal = DoubleArray(1)
+        val hilbertOutImag = DoubleArray(1)
+        hilbertFilter.run(rawSample, hilbertOutReal, hilbertOutImag)
+
+        // Step 2: Mixer — frequency-shift to fixed reference position.
+        // After mixing, tone[baseToneIndex] lands at (baseToneIndex * toneSpacingHz) Hz,
+        // which is exactly where the SlidingDFT's first bin sits.
+        val freqAdjustment = currentFrequencyHz - toneSpacingHz * baseToneIndex - bandwidth / 2.0
+        val cosPhase = cos(mixerPhaseAccumulator)
+        val sinPhase = sin(mixerPhaseAccumulator)
+        val mixedReal = hilbertOutReal[0] * cosPhase - hilbertOutImag[0] * sinPhase
+        val mixedImag = hilbertOutReal[0] * sinPhase + hilbertOutImag[0] * cosPhase
+        mixerPhaseAccumulator -= 2.0 * PI * freqAdjustment / sampleRate
+        if (mixerPhaseAccumulator < 0) mixerPhaseAccumulator += 2.0 * PI
+
+        // Step 3: Bandpass filter — remove out-of-band energy.
+        val bpOutReal = DoubleArray(1)
+        val bpOutImag = DoubleArray(1)
+        bandpassFilter.run(mixedReal, mixedImag, bpOutReal, bpOutImag)
+
+        // Step 4: Sliding DFT — update all tone bin energies and the pipe buffer.
+        slidingDFT.run(bpOutReal[0], bpOutImag[0])
+
+        // Step 5: Symbol decision — triggered once per symbol period.
+        if (--sampleCountdown <= 0)
+        {
+            sampleCountdown = samplesPerSymbol
+            slidingDFT.copyCurrentBins(currentBinsReal, currentBinsImag)
+            makeSymbolDecision()
+        }
+    }
+
+    // =========================================================================
+    // Symbol decision — called once per symbol period
+    // =========================================================================
+
+    /**
+     * Performs the full symbol-level processing when the sample counter expires.
+     *
+     * Matches fldigi's block inside `if (--synccounter <= 0)` in rx_process().
+     */
+    private suspend fun makeSymbolDecision()
+    {
+        currentSymbol = harddecode()
+        currentVectorBuf[0] = currentBinsReal[currentSymbol]
+        currentVectorBuf[1] = currentBinsImag[currentSymbol]
+
+        softdecode()
+        synchronize()
+        afc()
+
+        // Rotate the symbol history (prev2 ← prev1 ← current).
+        prevSymbol2    = prevSymbol1
+        prevVector1Buf[0] = currentVectorBuf[0]
+        prevVector1Buf[1] = currentVectorBuf[1]
+        prevSymbol1    = currentSymbol
+    }
+
+    // =========================================================================
+    // Hard decode — pick the highest-energy tone
+    // =========================================================================
+
+    /**
+     * Returns the index of the tone bin with the greatest magnitude.
+     * Also updates [afcMetric], [staticBurst], and [cwiCounters] for subsequent use.
+     *
+     * Direct translation of fldigi's mfsk::harddecode().
+     */
+    private fun harddecode(): Int
+    {
+        // Compute magnitudes for all bins.
+        var magnitudeSum = 0.0
+        for (i in 0 until toneCount)
+        {
+            val re = currentBinsReal[i]; val im = currentBinsImag[i]
+            magnitudeSum += sqrt(re * re + im * im)
+        }
+        val averageMagnitude = maxOf(magnitudeSum / toneCount, 1e-20)
+
+        var maxMagnitude = 0.0
+        var winnerIndex  = 0
+        var burstCount   = 0
+
+        for (i in 0 until toneCount)
+        {
+            val re = currentBinsReal[i]; val im = currentBinsImag[i]
+            val mag = sqrt(re * re + im * im)
+            if (mag > maxMagnitude) { maxMagnitude = mag; winnerIndex = i }
+            if (mag > 2.0 * averageMagnitude) burstCount++
+        }
+
+        staticBurst = (burstCount == toneCount)
+
+        afcMetric = if (staticBurst) 0.0
+        else decayAverage(afcMetric, 2.0 * maxMagnitude / averageMagnitude, weight = 20)
+
+        return winnerIndex
+    }
+
+    // =========================================================================
+    // Soft decode — form soft-decision bytes and feed into the FEC pipeline
+    // =========================================================================
+
+    /**
+     * Forms [bitsPerSymbol] soft-decision bytes from the current tone bin magnitudes,
+     * de-interleaves them, then feeds each through [decodesymbol].
+     *
+     * Soft byte value 0 = strong '0', 128 = uncertain, 255 = strong '1'.
+     *
+     * Includes CWI (Continuous Wave Interference) avoidance: tones that have
+     * dominated for [CWI_MAX_COUNT] consecutive symbol periods are soft-punctured
+     * (replaced by the average magnitude) so they don't corrupt the FEC input.
+     *
+     * Direct translation of fldigi's mfsk::softdecode().
+     */
+    private suspend fun softdecode()
+    {
+        // Compute total magnitude, excluding CWI-flagged tones.
+        var magnitudeSum = 0.0
+        for (i in 0 until toneCount)
+        {
+            if (cwiCounters[i] < CWI_MAX_COUNT)
+            {
+                val re = currentBinsReal[i]; val im = currentBinsImag[i]
+                magnitudeSum += sqrt(re * re + im * im)
+            }
+        }
+        val magnitudeSum2 = maxOf(magnitudeSum, 1e-10)
+        val averageMagnitude = magnitudeSum / toneCount
+
+        // Update CWI counters based on this symbol's hard-decode winner.
+        // Tone 0 is excluded (cannot be a CWI tone) — same as fldigi.
+        for (i in 1 until toneCount)
+        {
+            if (i == currentSymbol) cwiCounters[i]++
+            else                    cwiCounters[i] = maxOf(0, cwiCounters[i] - 1)
+            if (cwiCounters[i] > CWI_MAX_COUNT) cwiCounters[i] = CWI_MAX_COUNT + 1
+        }
+
+        // Accumulate per-bit soft evidence using Gray-decoded tone energies.
+        // For each tone bin, Gray-decode its index to get the bit pattern it represents,
+        // then add ±magnitude to each bit's accumulator.
+        val bitAccumulators = DoubleArray(bitsPerSymbol)
+        for (toneIndex in 0 until toneCount)
+        {
+            val grayDecoded = grayDecode(toneIndex)
+
+            val re = currentBinsReal[toneIndex]; val im = currentBinsImag[toneIndex]
+            val binMagnitude = when
+            {
+                cwiCounters[toneIndex] > CWI_MAX_COUNT ->
+                    averageMagnitude  // puncture: replace CWI tone with average
+                toneIndex == currentSymbol ->
+                    2.0 * sqrt(re * re + im * im)  // give hard-decode winner extra weight
+                else ->
+                    sqrt(re * re + im * im)
+            }
+
+            for (bitPos in 0 until bitsPerSymbol)
+            {
+                val bitIsSet = (grayDecoded and (1 shl (bitsPerSymbol - 1 - bitPos))) != 0
+                if (bitIsSet) bitAccumulators[bitPos] += binMagnitude
+                else          bitAccumulators[bitPos] -= binMagnitude
+            }
+        }
+
+        // Scale accumulators to [0, 255] soft bytes.
+        // staticBurst → puncture (128). Normal → clamp(128 + accumulator/sum * 256, 0, 255).
+        val softBytes = ByteArray(bitsPerSymbol) { bitPos ->
+            if (staticBurst) 128.toByte()
+            else (128.0 + bitAccumulators[bitPos] / magnitudeSum2 * 256.0)
+                .coerceIn(0.0, 255.0).toInt().toByte()
+        }
+
+        // De-interleave the soft bytes in place.
+        rxInterleaver.deinterleaveSymbols(softBytes)
+
+        // Feed each de-interleaved soft byte into the FEC decoder.
+        for (softByte in softBytes)
+        {
+            decodesymbol(softByte)
+        }
+    }
+
+    // =========================================================================
+    // FEC decoding — dual Viterbi with metric comparison
+    // =========================================================================
+
+    /**
+     * Feeds one de-interleaved soft byte into the Viterbi decode pipeline.
+     *
+     * Uses the dual-decoder scheme from fldigi's mfsk::decodesymbol():
+     * - symcounter alternates 0 ↔ 1 on each call.
+     * - Even bitsPerSymbol (MFSK-16): decode only when symcounter == 0 (dec2 only).
+     * - Odd bitsPerSymbol (MFSK-8, MFSK-32): both decoders run on alternate calls;
+     *   the one with the higher metric wins and its decoded bit goes to [recvbit].
+     *
+     * The symbolPair sliding window accumulates pairs of consecutive soft bytes —
+     * one pair per original input bit (R=1/2 rate means 2 soft bytes per decoded bit).
+     */
+    private suspend fun decodesymbol(softByte: Byte)
+    {
+        symbolPair[0] = symbolPair[1]
+        symbolPair[1] = softByte
+        symcounter    = if (symcounter != 0) 0 else 1
+
+        val oddBitsPerSymbol = bitsPerSymbol == 3 || bitsPerSymbol == 5 || bitsPerSymbol == 7
+        val decodedBit: Int
+
+        if (oddBitsPerSymbol)
+        {
+            if (symcounter != 0)
+            {
+                // dec1 path (odd symcounter)
+                val decoded = viterbiDecoder1.decode(symbolPair, metricResult)
+                if (decoded == -1) return
+                met1 = decayAverage(met1, metricResult[0].toDouble(), weight = 32)
+                if (met1 < met2) return
+                signalMetric = met1 / 1.5
+                decodedBit = decoded
+            }
+            else
+            {
+                // dec2 path (even symcounter)
+                val decoded = viterbiDecoder2.decode(symbolPair, metricResult)
+                if (decoded == -1) return
+                met2 = decayAverage(met2, metricResult[0].toDouble(), weight = 32)
+                if (met2 < met1) return
+                signalMetric = met2 / 1.5
+                decodedBit = decoded
+            }
+        }
+        else
+        {
+            // Even bitsPerSymbol — only dec2, only when symcounter == 0.
+            if (symcounter != 0) return
+            val decoded = viterbiDecoder2.decode(symbolPair, metricResult)
+            if (decoded == -1) return
+            met2         = decayAverage(met2, metricResult[0].toDouble(), weight = 32)
+            signalMetric = met2 / 1.5
+            decodedBit   = decoded
+        }
+
+        // Rescale metric to a useful display range (matches fldigi's post-decode scaling).
+        signalMetric = maxOf(signalMetric - 32.0, 5.0)
+
+        recvbit(decodedBit)
+    }
+
+    // =========================================================================
+    // Varicode decode → frame detection
+    // =========================================================================
+
+    /**
+     * Feeds one decoded bit into the IZ8BLY Varicode shift-register decoder.
+     * A non-null return from the decoder means a complete character was decoded.
+     *
+     * Direct translation of fldigi's mfsk::recvbit():
+     *   datashreg = (datashreg << 1) | bit
+     *   if ((datashreg & 7) == 1): decode character, reset datashreg = 1
+     */
+    private suspend fun recvbit(decodedBit: Int)
+    {
+        val decodedChar = varicodeDecoder.feed(decodedBit) ?: return
+        handleCharacter(decodedChar)
+    }
+
+    /**
+     * Handles one decoded character: detects STX/EOT frame markers and accumulates
+     * the text payload between them. Emits an [MFSKMessage] on a complete frame.
+     *
+     * fldigi frame structure (TX_STATE_START/FLUSH in mfsk.cxx):
+     *   CR STX CR <text> CR EOT CR [flush zeros]
+     */
+    private suspend fun handleCharacter(char: Char)
+    {
+        when
+        {
+            char == ASCII_STX ->
+            {
+                // Start of a new frame — discard any partial previous frame.
+                frameBuffer.clear()
+                insideFrame = true
+            }
+
+            char == ASCII_EOT && insideFrame ->
+            {
+                // End of frame — emit the accumulated text.
+                val text = frameBuffer.toString()
+                frameBuffer.clear()
+                insideFrame = false
+
+                if (text.isNotEmpty())
+                {
+                    _receivedMessages.emit(
+                        MFSKMessage(
+                            text       = text,
+                            receivedAt = Instant.now(),
+                            mode       = mode
+                        )
+                    )
+                }
+            }
+
+            insideFrame ->
+            {
+                // Accumulate payload character.
+                // CR characters from the fldigi framing are included — callers can strip them.
+                frameBuffer.append(char)
+            }
+        }
+    }
+
+    // =========================================================================
+    // Symbol timing recovery
+    // =========================================================================
+
+    /**
+     * Adjusts [sampleCountdown] to re-align the symbol clock with the incoming signal.
+     *
+     * Scans the SlidingDFT pipe buffer for the sample position of maximum energy in
+     * the [prevSymbol1] bin. If that peak is offset from the expected symbol boundary,
+     * the sample counter is nudged to compensate.
+     *
+     * Only runs when there was a tone transition (no sync signal in a steady state).
+     * Direct translation of fldigi's mfsk::synchronize().
+     */
+    private fun synchronize()
+    {
+        // Only sync when there was a transition (current ≠ prev1, prev1 ≠ prev2).
+        if (currentSymbol == prevSymbol1 || prevSymbol1 == prevSymbol2) return
+
+        val pipeLength = 2 * samplesPerSymbol
+        var maxMag     = 0.0
+        var peakOffset = 0.0
+
+        for (offset in 0 until pipeLength)
+        {
+            val mag = slidingDFT.getPipeEntryBinMagnitude(offset + 1, prevSymbol1)
+            if (mag > maxMag) { maxMag = mag; peakOffset = offset.toDouble() }
+        }
+
+        // Smooth the sync estimate with an 8-point moving average.
+        val smoothedOffset = syncFilter.run(peakOffset)
+
+        // Adjust the sample countdown proportionally to the offset from center.
+        sampleCountdown += floor(
+            (smoothedOffset - samplesPerSymbol) / toneCount + 0.5
+        ).toInt()
+    }
+
+    // =========================================================================
+    // Automatic frequency control
+    // =========================================================================
+
+    /**
+     * Tracks carrier frequency drift by comparing the complex phase of the current
+     * symbol's DFT bin between consecutive sample periods.
+     *
+     * When the phase difference indicates a frequency error, [currentFrequencyHz] is
+     * adjusted incrementally, which changes the mixer's phase increment and realigns
+     * the signal with the SlidingDFT bins.
+     *
+     * Direct translation of fldigi's mfsk::afc().
+     */
+    private fun afc()
+    {
+        // AFC only runs when the signal is strong enough and the tone is stable.
+        if (afcMetric < AFC_ACTIVATION_THRESHOLD) return
+        if (currentSymbol != prevSymbol1) return
+
+        // Retrieve the previous sample's complex vector for this tone bin.
+        val prevVectorReal = DoubleArray(1)
+        val prevVectorImag = DoubleArray(1)
+        slidingDFT.getPipeEntryBin(2, currentSymbol, prevVectorReal, prevVectorImag)
+
+        // Phase difference = conj(prev) * curr = (prevRe - j*prevIm) * (currRe + j*currIm)
+        val conjMulReal = prevVectorReal[0] * currentVectorBuf[0] + prevVectorImag[0] * currentVectorBuf[1]
+        val conjMulImag = prevVectorReal[0] * currentVectorBuf[1] - prevVectorImag[0] * currentVectorBuf[0]
+
+        // Frequency offset inferred from the phase angle.
+        val measuredFreq   = atan2(conjMulImag, conjMulReal) * sampleRate / (2.0 * PI)
+        val expectedFreq   = toneSpacingHz * (baseToneIndex + currentSymbol)
+        val halfToneSpacing = toneSpacingHz / 2.0
+
+        if (abs(expectedFreq - measuredFreq) < halfToneSpacing)
+        {
+            freqErr           = decayAverage(freqErr, expectedFreq - measuredFreq, weight = 32)
+            currentFrequencyHz -= freqErr
+        }
+    }
+
+    // =========================================================================
+    // Session state reset
+    // =========================================================================
+
+    private fun resetSessionState()
+    {
+        hilbertFilter.reset()
+        bandpassFilter.reset()
+        slidingDFT.reset()
+        rxInterleaver.reset()
+        viterbiDecoder1.reset()
+        viterbiDecoder2.reset()
+        varicodeDecoder.reset()
+        syncFilter.reset()
+
+        currentFrequencyHz   = configuration.baseFrequencyHz + bandwidth / 2.0
+        mixerPhaseAccumulator = 0.0
+        sampleCountdown      = samplesPerSymbol
+        currentSymbol        = 0
+        prevSymbol1          = 0
+        prevSymbol2          = 0
+        symcounter           = 0
+        symbolPair.fill(0)
+        met1                 = 0.0
+        met2                 = 0.0
+        signalMetric         = 0.0
+        freqErr              = 0.0
+        afcMetric            = 0.0
+        cwiCounters.fill(0)
+        staticBurst          = false
+        frameBuffer.clear()
+        insideFrame          = false
+        currentBinsReal.fill(0.0)
+        currentBinsImag.fill(0.0)
+    }
+
+    // =========================================================================
+    // DSP utilities
+    // =========================================================================
+
+    /**
+     * Gray code decode: converts a Gray-coded tone index to its binary value.
+     * Used in [softdecode] to map tone indices to bit patterns.
+     * Matches fldigi's graydecode() in misc.cxx.
+     */
     private fun grayDecode(gray: Int): Int
     {
-        var n = gray
-        var mask = n shr 1
+        var n    = gray
+        var mask = n ushr 1
+        while (mask != 0) { n = n xor mask; mask = mask ushr 1 }
+        return n
+    }
 
-        while (mask != 0) {
-            n = n xor mask
-            mask = mask shr 1
+    /**
+     * Exponential decay moving average.
+     * Equivalent to a one-pole IIR filter with time constant [weight].
+     * From fldigi's misc.h: ((input - average) / weight) + average
+     */
+    private fun decayAverage(average: Double, input: Double, weight: Int): Double
+    {
+        if (weight <= 1) return input
+        return (input - average) / weight + average
+    }
+
+    /**
+     * 8-point unweighted moving average filter.
+     * Used for smoothing the symbol timing sync estimate (fldigi's Cmovavg(8)).
+     */
+    private inner class MovingAverage(private val capacity: Int)
+    {
+        private val buffer  = DoubleArray(capacity)
+        private var pointer = 0
+        private var sum     = 0.0
+        private var primed  = false
+
+        fun run(value: Double): Double
+        {
+            if (!primed)
+            {
+                primed = true
+                buffer.fill(value)
+                sum     = value * capacity
+                pointer = 0
+            }
+            else
+            {
+                sum -= buffer[pointer]
+                sum += value
+                buffer[pointer] = value
+                if (++pointer >= capacity) pointer = 0
+            }
+            return sum / capacity
         }
 
-        return n
+        fun reset() { primed = false; sum = 0.0; pointer = 0; buffer.fill(0.0) }
+    }
+
+    // =========================================================================
+    // Constants
+    // =========================================================================
+
+    companion object
+    {
+        // fldigi's ASCII_STX and ASCII_EOT control characters for frame detection.
+        private const val ASCII_STX = 2.toChar()  // start of text
+        private const val ASCII_EOT = 4.toChar()  // end of transmission
+
+        /**
+         * Maximum number of consecutive symbol periods a tone can dominate before
+         * being treated as CW interference and soft-punctured.
+         * Matches fldigi's CWI_MAXCOUNT = 6 in softdecode().
+         */
+        private const val CWI_MAX_COUNT = 6
+
+        /**
+         * Minimum AFC metric before automatic frequency correction is applied.
+         * Below this threshold, the signal is too noisy or unstable for reliable
+         * frequency tracking. Matches fldigi's check: `if (afcmetric < 3.0) return`.
+         */
+        private const val AFC_ACTIVATION_THRESHOLD = 3.0
     }
 }
