@@ -93,7 +93,7 @@ class HilbertFilter
         // Convolve: tap[0] is applied to the newest sample, tap[TAP_COUNT-1] to the oldest.
         for (tapIndex in 0 until TAP_COUNT)
         {
-            val bufferIndex = (writePointer - tapIndex + TAP_COUNT) % TAP_COUNT
+            val bufferIndex = (writePointer + 1 + tapIndex) % TAP_COUNT
             val bufferSample = sampleBuffer[bufferIndex]
             iAccumulator += bufferSample * iTaps[tapIndex]
             qAccumulator += bufferSample * qTaps[tapIndex]

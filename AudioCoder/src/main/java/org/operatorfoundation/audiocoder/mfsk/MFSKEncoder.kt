@@ -253,19 +253,26 @@ object MFSKEncoder
             }
         }
 
-        /**
-         * Passes the completed nibble through the interleaver, then Gray-encodes
-         * the result and adds it to [outputSymbols].
-         *
-         * Gray encoding ensures that adjacent tones differ by only one bit, minimising
-         * the Hamming distance between neighbouring tone errors. Matches fldigi's
-         * sendsymbol(): `sym = grayencode(sym & (numtones - 1))`.
-         */
         private fun emitSymbol(nibble: Int)
         {
             val interleaved = txInterleaver.interleaveNibble(nibble)
             val masked = interleaved and (mode.toneCount - 1)
-            val grayEncoded = masked xor (masked ushr 1)
+
+            // MFSK-16 gray encode (weight → tone index).
+            //
+            // Maps a 4-bit weight to its tone index per the IZ8BLY MFSK-16 spec table.
+            // The operation is the cumulative XOR of the weight with all its right shifts:
+            //   tone = w ^ (w >> 1) ^ (w >> 2) ^ ... ^ (w >> 7)
+            var grayEncoded = masked
+            grayEncoded = grayEncoded xor (masked ushr 1)
+            grayEncoded = grayEncoded xor (masked ushr 2)
+            grayEncoded = grayEncoded xor (masked ushr 3)
+            grayEncoded = grayEncoded xor (masked ushr 4)
+            grayEncoded = grayEncoded xor (masked ushr 5)
+            grayEncoded = grayEncoded xor (masked ushr 6)
+            grayEncoded = grayEncoded xor (masked ushr 7)
+            grayEncoded = grayEncoded and (mode.toneCount - 1)
+
             outputSymbols.add(grayEncoded)
         }
     }

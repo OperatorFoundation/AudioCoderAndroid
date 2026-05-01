@@ -101,7 +101,7 @@ class BandpassFilter(
 
         for (tapIndex in 0 until TAP_COUNT)
         {
-            val bufferIndex = (writePointer - tapIndex + TAP_COUNT) % TAP_COUNT
+            val bufferIndex = (writePointer + 1 + tapIndex) % TAP_COUNT
             iAccumulator += iBuffer[bufferIndex] * taps[tapIndex]
             qAccumulator += qBuffer[bufferIndex] * taps[tapIndex]
         }

@@ -692,17 +692,9 @@ class MFSKStation(
     // DSP utilities
     // =========================================================================
 
-    /**
-     * Gray code decode: converts a Gray-coded tone index to its binary value.
-     * Used in [softdecode] to map tone indices to bit patterns.
-     * Matches fldigi's graydecode() in misc.cxx.
-     */
     private fun grayDecode(gray: Int): Int
     {
-        var n    = gray
-        var mask = n ushr 1
-        while (mask != 0) { n = n xor mask; mask = mask ushr 1 }
-        return n
+        return gray xor (gray ushr 1)
     }
 
     /**

@@ -62,6 +62,9 @@ android {
 }
 
 dependencies {
+
+    implementation("com.github.OperatorFoundation:FldigiAndroid:63151eaa60")
+
     implementation(libs.timber)
 
     implementation(libs.androidx.core.ktx)
