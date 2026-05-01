@@ -43,8 +43,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
@@ -63,7 +63,7 @@ android {
 
 dependencies {
 
-    implementation("com.github.OperatorFoundation:FldigiAndroid:fbd6e8dd08")
+    implementation("com.github.OperatorFoundation:FldigiAndroid:0.3.0")
 
     implementation(libs.timber)
 
@@ -72,7 +72,7 @@ dependencies {
     implementation(libs.material)
 
     testImplementation(libs.junit)
-    androidTestImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.0.21")
+    androidTestImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.3.21")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
