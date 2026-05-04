@@ -48,7 +48,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 
     // JitPack publishing
@@ -72,6 +72,9 @@ dependencies {
     implementation(libs.material)
 
     testImplementation(libs.junit)
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test:rules:1.6.1")
+    androidTestImplementation(libs.junit)
     androidTestImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.3.21")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
