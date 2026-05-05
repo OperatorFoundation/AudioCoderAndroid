@@ -283,7 +283,8 @@ object MFSKAndFlmsgEngine
         val bytes = text.toByteArray(Charsets.UTF_8)
 
         return mutex.withLock {
-            withContext(Dispatchers.IO) {
+            Timber.d("MFSKAndFlmsgEngine: runTxProcess about to call txCProcess (${bytes.size} bytes)")
+            val result = withContext(Dispatchers.IO) {
                 // Reset the abort flag in case a previous transmission was
                 // aborted via [MFSKAndFlmsgTxHandle.abort]. Without this,
                 // tones from this transmission would be silently discarded.
@@ -291,6 +292,8 @@ object MFSKAndFlmsgEngine
 
                 Modem.txCProcess(bytes, bytes.size)
             }
+            Timber.d("MFSKAndFlmsgEngine: runTxProcess returned $result")
+            result
         }
     }
 
@@ -387,6 +390,8 @@ object MFSKAndFlmsgEngine
         {
             override fun onToneDescriptors(descriptors: IntArray, length: Int)
             {
+                Timber.d("MFSKAndFlmsgEngine: onToneDescriptors fired, length=$length")
+
                 // Defensive: length should always be even (interleaved pairs).
                 // If it's not, truncate to the largest even count we can
                 // safely read rather than risking an out-of-bounds read.

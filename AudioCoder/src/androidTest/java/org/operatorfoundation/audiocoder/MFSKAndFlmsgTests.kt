@@ -2,13 +2,16 @@ package org.operatorfoundation.audiocoder
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.AndFlmsg.Modem
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.operatorfoundation.audiocoder.mfsk.MFSKMode
@@ -45,8 +48,18 @@ import kotlin.test.fail
  *
  * Each test that acquires a handle releases it before returning. Because the
  * engine is a singleton tied to static native state, leaking a handle from
- * one test would cascade into failures in subsequent tests. Every acquire
- * is paired with a `try { ... } finally { handle.close() }` block.
+ * one test would cascade into failures in subsequent tests. Every acquire is
+ * paired with a `try { ... } finally { handle.close() }` block.
+ *
+ * ## Test method shape
+ *
+ * Every `@Test` method uses block-bodied syntax — `fun foo() { runBlocking { ... } }`
+ * rather than `fun foo() = runBlocking { ... }` — to guarantee a `void`-returning
+ * compiled signature regardless of what the last expression in the block evaluates
+ * to. JUnit 4 rejects test methods whose compiled return type is not `void`, and
+ * the expression-bodied form silently inherits the type of its last expression
+ * (which can be `IllegalStateException` after a call to `assertFailsWith`, for
+ * example).
  */
 @RunWith(AndroidJUnit4::class)
 class MFSKAndFlmsgTests
@@ -113,16 +126,19 @@ class MFSKAndFlmsgTests
      * Verifies that releasing an RX handle frees the engine for re-acquisition.
      */
     @Test
-    fun acquireForRx_thenRelease_freesEngine() = runBlocking {
-        val first = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
-        val firstHandle = (first as? RxAcquisitionResult.Success)?.handle
-            ?: fail("First acquire failed: $first")
-        firstHandle.close()
+    fun acquireForRx_thenRelease_freesEngine()
+    {
+        runBlocking {
+            val first = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val firstHandle = (first as? RxAcquisitionResult.Success)?.handle
+                ?: fail("First acquire failed: $first")
+            firstHandle.close()
 
-        val second = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
-        val secondHandle = (second as? RxAcquisitionResult.Success)?.handle
-            ?: fail("Second acquire failed after release: $second")
-        secondHandle.close()
+            val second = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val secondHandle = (second as? RxAcquisitionResult.Success)?.handle
+                ?: fail("Second acquire failed after release: $second")
+            secondHandle.close()
+        }
     }
 
     /**
@@ -131,23 +147,26 @@ class MFSKAndFlmsgTests
      * the cross-direction case (TX cannot start while RX is live).
      */
     @Test
-    fun acquireForTx_whileRxLive_returnsBusy() = runBlocking {
-        val rxResult = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
-        val rxHandle = (rxResult as? RxAcquisitionResult.Success)?.handle
-            ?: fail("RX acquire failed: $rxResult")
+    fun acquireForTx_whileRxLive_returnsBusy()
+    {
+        runBlocking {
+            val rxResult = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val rxHandle = (rxResult as? RxAcquisitionResult.Success)?.handle
+                ?: fail("RX acquire failed: $rxResult")
 
-        try
-        {
-            val txResult = MFSKAndFlmsgEngine.acquireForTx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
-            assertEquals(
-                TxAcquisitionResult.Busy,
-                txResult,
-                "Expected Busy when RX is live, got: $txResult"
-            )
-        }
-        finally
-        {
-            rxHandle.close()
+            try
+            {
+                val txResult = MFSKAndFlmsgEngine.acquireForTx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+                assertEquals(
+                    TxAcquisitionResult.Busy,
+                    txResult,
+                    "Expected Busy when RX is live, got: $txResult"
+                )
+            }
+            finally
+            {
+                rxHandle.close()
+            }
         }
     }
 
@@ -156,16 +175,19 @@ class MFSKAndFlmsgTests
      * containing a non-empty reason. Only MFSK-16 is currently mapped.
      */
     @Test
-    fun acquireForRx_unsupportedMode_returnsFailed() = runBlocking {
-        val result = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK32, MFSK16_CENTER_FREQUENCY_HZ)
+    fun acquireForRx_unsupportedMode_returnsFailed()
+    {
+        runBlocking {
+            val result = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK32, MFSK16_CENTER_FREQUENCY_HZ)
 
-        val failed = result as? RxAcquisitionResult.Failed
-            ?: fail("Expected Failed for unsupported mode, got: $result")
+            val failed = result as? RxAcquisitionResult.Failed
+                ?: fail("Expected Failed for unsupported mode, got: $result")
 
-        assertTrue(
-            failed.reason.isNotBlank(),
-            "Failed reason should be non-empty for caller diagnostics"
-        )
+            assertTrue(
+                failed.reason.isNotBlank(),
+                "Failed reason should be non-empty for caller diagnostics"
+            )
+        }
     }
 
     /**
@@ -173,13 +195,16 @@ class MFSKAndFlmsgTests
      * than an error.
      */
     @Test
-    fun closeAfterClose_isNoOp() = runBlocking {
-        val result = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
-        val handle = (result as? RxAcquisitionResult.Success)?.handle
-            ?: fail("Acquire failed: $result")
+    fun closeAfterClose_isNoOp()
+    {
+        runBlocking {
+            val result = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val handle = (result as? RxAcquisitionResult.Success)?.handle
+                ?: fail("Acquire failed: $result")
 
-        handle.close()
-        handle.close()  // Should not throw.
+            handle.close()
+            handle.close()  // Should not throw.
+        }
     }
 
     /**
@@ -188,15 +213,18 @@ class MFSKAndFlmsgTests
      * use-after-close bugs at the consumer.
      */
     @Test
-    fun pushAudio_afterClose_throwsIllegalStateException() = runBlocking {
-        val result = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
-        val handle = (result as? RxAcquisitionResult.Success)?.handle
-            ?: fail("Acquire failed: $result")
+    fun pushAudio_afterClose_throwsIllegalStateException()
+    {
+        runBlocking {
+            val result = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val handle = (result as? RxAcquisitionResult.Success)?.handle
+                ?: fail("Acquire failed: $result")
 
-        handle.close()
+            handle.close()
 
-        assertFailsWith<IllegalStateException> {
-            handle.pushAudio(ShortArray(100))
+            assertFailsWith<IllegalStateException> {
+                handle.pushAudio(ShortArray(100))
+            }
         }
     }
 
@@ -205,15 +233,18 @@ class MFSKAndFlmsgTests
      * [MFSKAndFlmsgTxHandle.close] throws [IllegalStateException].
      */
     @Test
-    fun transmit_afterClose_throwsIllegalStateException() = runBlocking {
-        val result = MFSKAndFlmsgEngine.acquireForTx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
-        val handle = (result as? TxAcquisitionResult.Success)?.handle
-            ?: fail("Acquire failed: $result")
+    fun transmit_afterClose_throwsIllegalStateException()
+    {
+        runBlocking {
+            val result = MFSKAndFlmsgEngine.acquireForTx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val handle = (result as? TxAcquisitionResult.Success)?.handle
+                ?: fail("Acquire failed: $result")
 
-        handle.close()
+            handle.close()
 
-        assertFailsWith<IllegalStateException> {
-            handle.transmit("HELLO")
+            assertFailsWith<IllegalStateException> {
+                handle.transmit("HELLO")
+            }
         }
     }
 
@@ -226,9 +257,12 @@ class MFSKAndFlmsgTests
      * Smoke check before the more detailed band/duration assertions.
      */
     @Test
-    fun transmit_emitsTones() = runBlocking {
-        val tones = transmitAndCollectTones("HELLO")
-        assertTrue(tones.isNotEmpty(), "Expected at least one tone, got none")
+    fun transmit_emitsTones()
+    {
+        runBlocking {
+            val tones = transmitAndCollectTones("HELLO")
+            assertTrue(tones.isNotEmpty(), "Expected at least one tone, got none")
+        }
     }
 
     /**
@@ -242,17 +276,20 @@ class MFSKAndFlmsgTests
      *   - Wrong protocol selected (a different mode would have a different band)
      */
     @Test
-    fun transmit_tonesFallInExpectedBand() = runBlocking {
-        val tones = transmitAndCollectTones("HELLO")
-        val bandLowHz  = MFSK16_CENTER_FREQUENCY_HZ - MFSK16_BAND_HALF_WIDTH_HZ
-        val bandHighHz = MFSK16_CENTER_FREQUENCY_HZ + MFSK16_BAND_HALF_WIDTH_HZ
+    fun transmit_tonesFallInExpectedBand()
+    {
+        runBlocking {
+            val tones = transmitAndCollectTones("HELLO")
+            val bandLowHz  = MFSK16_CENTER_FREQUENCY_HZ - MFSK16_BAND_HALF_WIDTH_HZ
+            val bandHighHz = MFSK16_CENTER_FREQUENCY_HZ + MFSK16_BAND_HALF_WIDTH_HZ
 
-        val outOfBand = tones.filter { it.frequencyHz < bandLowHz || it.frequencyHz > bandHighHz }
-        assertTrue(
-            outOfBand.isEmpty(),
-            "Expected all tones in [${bandLowHz}, ${bandHighHz}] Hz, " +
-                    "but ${outOfBand.size} tones fell outside: ${outOfBand.take(5)}"
-        )
+            val outOfBand = tones.filter { it.frequencyHz < bandLowHz || it.frequencyHz > bandHighHz }
+            assertTrue(
+                outOfBand.isEmpty(),
+                "Expected all tones in [${bandLowHz}, ${bandHighHz}] Hz, " +
+                        "but ${outOfBand.size} tones fell outside: ${outOfBand.take(5)}"
+            )
+        }
     }
 
     /**
@@ -266,78 +303,107 @@ class MFSKAndFlmsgTests
      * an exact value.
      */
     @Test
-    fun transmit_durationSamplesPlausible() = runBlocking {
-        val tones = transmitAndCollectTones("HELLO")
+    fun transmit_durationSamplesPlausible()
+    {
+        runBlocking {
+            val tones = transmitAndCollectTones("HELLO")
 
-        val implausible = tones.filter { it.durationSamples !in 100..2000 }
-        assertTrue(
-            implausible.isEmpty(),
-            "Expected all tone durations in [100, 2000] samples, " +
-                    "but ${implausible.size} tones were outside: ${implausible.take(5)}"
-        )
+            val implausible = tones.filter { it.durationSamples !in 100..2000 }
+            assertTrue(
+                implausible.isEmpty(),
+                "Expected all tone durations in [100, 2000] samples, " +
+                        "but ${implausible.size} tones were outside: ${implausible.take(5)}"
+            )
+        }
     }
 
     /**
      * Verifies that [MFSKAndFlmsgTxHandle.abort] stops the tone stream.
      *
      * Strategy:
-     *   1. Start a long transmission in a background coroutine.
-     *   2. Wait briefly for tones to start flowing.
-     *   3. Call abort() and record the tone count immediately after.
-     *   4. Wait long enough for any in-flight emissions to land.
-     *   5. Verify the tone count has not grown.
+     *   1. Acquire TX, subscribe a collector (synchronizing via [CompletableDeferred]
+     *      so we don't race against transmit).
+     *   2. Start a long transmission in a background coroutine.
+     *   3. Wait briefly for tones to start flowing.
+     *   4. Verify some tones have been collected (otherwise the assertion
+     *      below would pass trivially with `0 == 0`).
+     *   5. Call abort() and record the tone count.
+     *   6. Wait long enough for any in-flight emissions to land.
+     *   7. Verify the tone count has not grown.
      *
      * The C++ TX state machine continues running until its byte buffer is
      * exhausted — abort() does not stop the state machine, only silences the
      * tone callback. This test verifies that silencing.
      */
     @Test
-    fun abort_silencesToneStream() = runBlocking {
-        val acquireResult = MFSKAndFlmsgEngine.acquireForTx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
-        val handle = (acquireResult as? TxAcquisitionResult.Success)?.handle
-            ?: fail("Acquire failed: $acquireResult")
+    fun abort_silencesToneStream()
+    {
+        runBlocking {
+            val acquireResult = MFSKAndFlmsgEngine.acquireForTx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val handle = (acquireResult as? TxAcquisitionResult.Success)?.handle
+                ?: fail("Acquire failed: $acquireResult")
 
-        try
-        {
-            val collectedTones = mutableListOf<ToneDescriptor>()
-            val collectorJob = launch(Dispatchers.IO) {
-                handle.tones.collect { collectedTones.add(it) }
+            try
+            {
+                val collectedTones = mutableListOf<ToneDescriptor>()
+                val collectorReady = CompletableDeferred<Unit>()
+
+                val collectorJob = launch(Dispatchers.IO) {
+                    handle.tones
+                        .onSubscription { collectorReady.complete(Unit) }
+                        .collect { collectedTones.add(it) }
+                }
+
+                // Synchronize so the collector is subscribed before transmit
+                // starts. Without this, the SharedFlow's replay=0 means
+                // emissions before subscription are lost.
+                collectorReady.await()
+
+                // Long-ish payload so we have time to abort partway through.
+                // The transmit call is synchronous on the engine thread; we run
+                // it as a deferred so the test coroutine can call abort() while
+                // it's in progress.
+                val transmitDeferred = async(Dispatchers.IO) {
+                    handle.transmit("THIS IS A LONGER MESSAGE FOR ABORT TESTING")
+                }
+
+                // Wait for some tones to flow before aborting.
+                delay(100L)
+
+                // Sanity check: if no tones came through, the rest of the test
+                // is meaningless (countAtAbort == countAfterDrain == 0 would
+                // pass trivially).
+                assertTrue(
+                    collectedTones.isNotEmpty(),
+                    "Expected some tones before abort; the abort assertion below " +
+                            "would otherwise pass trivially with no tones at all"
+                )
+
+                handle.abort()
+                val countAtAbort = collectedTones.size
+
+                // Let the in-flight emissions land. transmitDeferred will return
+                // when the C++ TX state machine drains, which may be after this
+                // delay — that's fine, we only care that no new tones reach the
+                // collector after abort.
+                delay(TONE_DRAIN_DELAY_MS)
+                val countAfterDrain = collectedTones.size
+
+                // Wait for the transmit call to fully complete before tearing down.
+                transmitDeferred.await()
+                collectorJob.cancelAndJoin()
+
+                assertEquals(
+                    countAtAbort,
+                    countAfterDrain,
+                    "Expected no new tones after abort, but count grew from " +
+                            "$countAtAbort to $countAfterDrain"
+                )
             }
-
-            // Long-ish payload so we have time to abort partway through.
-            // The transmit call is synchronous on the engine thread; we run
-            // it as a deferred so the test coroutine can call abort() while
-            // it's in progress.
-            val transmitDeferred = async(Dispatchers.IO) {
-                handle.transmit("THIS IS A LONGER MESSAGE FOR ABORT TESTING")
+            finally
+            {
+                handle.close()
             }
-
-            // Wait for some tones to flow before aborting.
-            delay(100L)
-            handle.abort()
-            val countAtAbort = collectedTones.size
-
-            // Let the in-flight emissions land. transmitDeferred will return
-            // when the C++ TX state machine drains, which may be after this
-            // delay — that's fine, we only care that no new tones reach the
-            // collector after abort.
-            delay(TONE_DRAIN_DELAY_MS)
-            val countAfterDrain = collectedTones.size
-
-            // Wait for the transmit call to fully complete before tearing down.
-            transmitDeferred.await()
-            collectorJob.cancel()
-
-            assertEquals(
-                countAtAbort,
-                countAfterDrain,
-                "Expected no new tones after abort, but count grew from " +
-                        "$countAtAbort to $countAfterDrain"
-            )
-        }
-        finally
-        {
-            handle.close()
         }
     }
 
@@ -357,24 +423,27 @@ class MFSKAndFlmsgTests
      * a realistic chunk size for the production audio pipeline.
      */
     @Test
-    fun pushAudio_silence_doesNotCrash() = runBlocking {
-        val acquireResult = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
-        val handle = (acquireResult as? RxAcquisitionResult.Success)?.handle
-            ?: fail("Acquire failed: $acquireResult")
+    fun pushAudio_silence_doesNotCrash()
+    {
+        runBlocking {
+            val acquireResult = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val handle = (acquireResult as? RxAcquisitionResult.Success)?.handle
+                ?: fail("Acquire failed: $acquireResult")
 
-        try
-        {
-            val oneSecondOfSilence = ShortArray(8000)
-            val decoded = handle.pushAudio(oneSecondOfSilence)
+            try
+            {
+                val oneSecondOfSilence = ShortArray(8000)
+                val decoded = handle.pushAudio(oneSecondOfSilence)
 
-            // We don't assert anything about the contents — just that we got
-            // a non-null string back without an exception.
-            @Suppress("UNUSED_VARIABLE")
-            val length = decoded.length
-        }
-        finally
-        {
-            handle.close()
+                // We don't assert anything about the contents — just that we got
+                // a non-null string back without an exception.
+                @Suppress("UNUSED_VARIABLE")
+                val length = decoded.length
+            }
+            finally
+            {
+                handle.close()
+            }
         }
     }
 
@@ -387,10 +456,15 @@ class MFSKAndFlmsgTests
      * releases the handle. Used by the TX behavior tests that share the same
      * setup pattern.
      *
+     * Subscription ordering matters: the underlying [MutableSharedFlow] uses
+     * `replay = 0`, so any tones emitted before a collector is subscribed are
+     * lost to that collector. This helper uses [onSubscription] plus a
+     * [CompletableDeferred] barrier to guarantee the collector is fully
+     * subscribed before [text] is transmitted.
+     *
      * @return All tones emitted during the transmission, in order.
      */
-    private suspend fun transmitAndCollectTones(text: String): List<ToneDescriptor>
-    {
+    private suspend fun transmitAndCollectTones(text: String): List<ToneDescriptor> = coroutineScope {
         val acquireResult = MFSKAndFlmsgEngine.acquireForTx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
         val handle = (acquireResult as? TxAcquisitionResult.Success)?.handle
             ?: fail("Acquire failed: $acquireResult")
@@ -398,9 +472,26 @@ class MFSKAndFlmsgTests
         try
         {
             val collectedTones = mutableListOf<ToneDescriptor>()
-            val collectorJob: Job = withContext(Dispatchers.IO) {
-                launch { handle.tones.collect { collectedTones.add(it) } }
+
+            // Barrier: completed by the collector when it actually subscribes.
+            // Without this, the collector launch returns immediately but the
+            // coroutine itself is still queued on the dispatcher when transmit
+            // begins. The native TX runs synchronously and emits all tones
+            // before the collector ever attaches, and with replay=0 those
+            // tones are lost to a late subscriber.
+            val collectorReady = CompletableDeferred<Unit>()
+
+            val collectorJob: Job = launch(Dispatchers.IO) {
+                handle.tones
+                    .onSubscription { collectorReady.complete(Unit) }
+                    .collect { collectedTones.add(it) }
             }
+
+            // Wait for the collector to be a registered subscriber before
+            // transmitting. onSubscription runs after the upstream flow has
+            // accepted us as a subscriber, so once this await returns,
+            // tryEmit calls into the SharedFlow will reach our collector.
+            collectorReady.await()
 
             handle.transmit(text)
 
@@ -409,9 +500,15 @@ class MFSKAndFlmsgTests
             // returns, all tones have been pushed to the SharedFlow buffer;
             // this delay covers the buffer-to-collector handoff.
             delay(TONE_DRAIN_DELAY_MS)
-            collectorJob.cancel()
 
-            return collectedTones.toList()
+            // cancelAndJoin (rather than cancel) so the collector is fully
+            // torn down before we return to the test. A bare cancel() leaves
+            // the collector coroutine alive on Dispatchers.IO until the
+            // cancellation propagates, which can wedge subsequent tests
+            // that share the IO thread pool.
+            collectorJob.cancelAndJoin()
+
+            collectedTones.toList()
         }
         finally
         {

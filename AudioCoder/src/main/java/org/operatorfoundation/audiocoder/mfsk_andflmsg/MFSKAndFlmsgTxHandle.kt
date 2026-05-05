@@ -1,7 +1,6 @@
 package org.operatorfoundation.audiocoder.mfsk_andflmsg
 
 import com.AndFlmsg.Modem
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 
 /**
@@ -33,10 +32,20 @@ class MFSKAndFlmsgTxHandle internal constructor(
      * hardware expects (for example, USB serial commands to a radio, or PCM
      * audio samples).
      *
-     * No replay buffer — start collecting before calling [transmit] or you will
-     * miss emissions.
+     * No replay buffer — collectors must be fully subscribed before [transmit]
+     * is called or they will miss emissions. "Subscribed" means the collector
+     * coroutine has reached the upstream of [collect][kotlinx.coroutines.flow.Flow.collect],
+     * not merely that [launch][kotlinx.coroutines.launch] has returned a Job.
+     * Use [onSubscription][kotlinx.coroutines.flow.onSubscription] with a
+     * [CompletableDeferred][kotlinx.coroutines.CompletableDeferred] barrier
+     * to synchronize, or check [subscriptionCount].
+     *
+     * Exposed as [SharedFlow] (rather than the more abstract [Flow]) so
+     * consumers can use subscription-aware operations like
+     * [subscriptionCount] and [onSubscription] for the synchronization
+     * pattern this contract requires.
      */
-    val tones: Flow<ToneDescriptor>
+    val tones: SharedFlow<ToneDescriptor>
 )
 {
     private var closed = false
