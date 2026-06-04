@@ -1,13 +1,13 @@
 package org.operatorfoundation.audiocoder.mfsk_andflmsg
 
 import com.AndFlmsg.Modem
+import com.AndFlmsg.ToneMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import org.operatorfoundation.audiocoder.mfsk.MFSKMode
 import timber.log.Timber
 
 // =============================================================================
@@ -53,20 +53,6 @@ object MFSKAndFlmsgEngine
     // -------------------------------------------------------------------------
     // Constants
     // -------------------------------------------------------------------------
-
-    /**
-     * Mode code passed to [Modem.createCModem] for MFSK-16.
-     *
-     * This integer corresponds to the position of `MODE_MFSK16` in the enum
-     * in fldigi's `globals.h`, as compiled into the FldigiAndroid build that
-     * AudioCoder depends on. If FldigiAndroid's `globals.h` changes (modes
-     * added, removed, or reordered before MFSK16), this constant must be
-     * updated to match.
-     *
-     * Verified empirically by `MFSKAndFlmsgTests.createCModem_mfsk16_doesNotCrash`
-     * — that test will fail if this value drifts.
-     */
-    private const val MODEM_CODE_MFSK16 = 22
 
     /**
      * Buffer capacity for the per-session tone SharedFlow.
@@ -123,10 +109,10 @@ object MFSKAndFlmsgEngine
      * @param frequencyHz Audio center frequency in Hz (typically 1500.0 for
      *                    fldigi MFSK-16).
      */
-    suspend fun acquireForRx(mode: MFSKMode, frequencyHz: Double): RxAcquisitionResult
+    suspend fun acquireForRx(mode: ToneMode, frequencyHz: Double): RxAcquisitionResult
     {
-        val modeCode = modeCodeFor(mode)
-            ?: return RxAcquisitionResult.Failed("Unsupported mode: ${mode.label}")
+        val modeCode = mode.code().takeIf { it >= 0 }
+            ?: return RxAcquisitionResult.Failed("Native returned no code for ToneMode.${mode.name}")
 
         return mutex.withLock {
             if (currentHandle != null)
@@ -163,7 +149,7 @@ object MFSKAndFlmsgEngine
 
             val handle = MFSKAndFlmsgRxHandle(this)
             currentHandle = handle
-            Timber.d("MFSKAndFlmsgEngine: RX acquired (mode=${mode.label}, freq=${frequencyHz}Hz)")
+            Timber.d("MFSKAndFlmsgEngine: RX acquired (mode=${mode.name}, freq=${frequencyHz}Hz)")
             RxAcquisitionResult.Success(handle)
         }
     }
@@ -184,10 +170,10 @@ object MFSKAndFlmsgEngine
      * @param frequencyHz Audio center frequency in Hz (typically 1500.0 for
      *                    fldigi MFSK-16).
      */
-    suspend fun acquireForTx(mode: MFSKMode, frequencyHz: Double): TxAcquisitionResult
+    suspend fun acquireForTx(mode: ToneMode, frequencyHz: Double): TxAcquisitionResult
     {
-        val modeCode = modeCodeFor(mode)
-            ?: return TxAcquisitionResult.Failed("Unsupported mode: ${mode.label}")
+        val modeCode = mode.code().takeIf { it >= 0 }
+            ?: return TxAcquisitionResult.Failed("Native returned no code for ToneMode.${mode.name}")
 
         return mutex.withLock {
             if (currentHandle != null)
@@ -229,7 +215,7 @@ object MFSKAndFlmsgEngine
                 tones  = toneFlow.asSharedFlow()
             )
             currentHandle = handle
-            Timber.d("MFSKAndFlmsgEngine: TX acquired (mode=${mode.label}, freq=${frequencyHz}Hz)")
+            Timber.d("MFSKAndFlmsgEngine: TX acquired (mode=${mode.name}, freq=${frequencyHz}Hz)")
             TxAcquisitionResult.Success(handle)
         }
     }
@@ -283,7 +269,8 @@ object MFSKAndFlmsgEngine
         val bytes = text.toByteArray(Charsets.UTF_8)
 
         return mutex.withLock {
-            Timber.d("MFSKAndFlmsgEngine: runTxProcess about to call txCProcess (${bytes.size} bytes)")
+            Timber.d("MFSKAndFlmsgEngine: runTxProcess pre-call, stopTX=${Modem.stopTX}, listener=${Modem.toneDescriptorListener != null}")
+
             val result = withContext(Dispatchers.IO) {
                 // Reset the abort flag in case a previous transmission was
                 // aborted via [MFSKAndFlmsgTxHandle.abort]. Without this,
@@ -292,6 +279,8 @@ object MFSKAndFlmsgEngine
 
                 Modem.txCProcess(bytes, bytes.size)
             }
+
+            Timber.d("MFSKAndFlmsgEngine: txProgress=${Modem.getTxProgressPercent()}%")
             Timber.d("MFSKAndFlmsgEngine: runTxProcess returned $result")
             result
         }
@@ -353,21 +342,6 @@ object MFSKAndFlmsgEngine
     // -------------------------------------------------------------------------
 
     /**
-     * Returns the native mode code for [mode], or null if no MFSK-And-Flmsg
-     * mapping exists.
-     *
-     * Currently only MFSK-16 is mapped because that's the only mode whose
-     * code we have empirically verified against the FldigiAndroid build.
-     * Adding other modes is a one-line change here plus a smoke test
-     * verifying the new code.
-     */
-    private fun modeCodeFor(mode: MFSKMode): Int? = when (mode)
-    {
-        MFSKMode.MFSK16 -> MODEM_CODE_MFSK16
-        else            -> null
-    }
-
-    /**
      * Installs a [Modem.ToneDescriptorListener] that decodes the int[] payload
      * from the C++ side and emits [ToneDescriptor] values into [toneFlow].
      *
@@ -386,6 +360,8 @@ object MFSKAndFlmsgEngine
     private fun installToneListener(toneFlow: MutableSharedFlow<ToneDescriptor>)
     {
         Modem.stopTX = false
+        Timber.d("MFSKAndFlmsgEngine: installing tone listener, stopTX=${Modem.stopTX}")
+
         Modem.toneDescriptorListener = object : Modem.ToneDescriptorListener
         {
             override fun onToneDescriptors(descriptors: IntArray, length: Int)

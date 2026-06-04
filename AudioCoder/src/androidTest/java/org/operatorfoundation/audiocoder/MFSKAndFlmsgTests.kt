@@ -2,6 +2,7 @@ package org.operatorfoundation.audiocoder
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.AndFlmsg.Modem
+import com.AndFlmsg.ToneMode
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -12,13 +13,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.operatorfoundation.audiocoder.mfsk.MFSKMode
 import org.operatorfoundation.audiocoder.mfsk_andflmsg.MFSKAndFlmsgEngine
 import org.operatorfoundation.audiocoder.mfsk_andflmsg.RxAcquisitionResult
 import org.operatorfoundation.audiocoder.mfsk_andflmsg.ToneDescriptor
 import org.operatorfoundation.audiocoder.mfsk_andflmsg.TxAcquisitionResult
+import timber.log.Timber
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
@@ -64,6 +66,21 @@ import kotlin.test.fail
 @RunWith(AndroidJUnit4::class)
 class MFSKAndFlmsgTests
 {
+    companion object
+    {
+        // Plant a DebugTree once per class so engine Timber logs are visible
+        // even when a single test is run in isolation. Idempotent: a prior
+        // test class may have already planted one.
+        @JvmStatic
+        @BeforeClass
+        fun plantTimberOnce()
+        {
+            if (Timber.forest().none { it is Timber.DebugTree })
+            {
+                Timber.plant(Timber.DebugTree())
+            }
+        }
+    }
     // =========================================================================
     // Constants used across tests
     // =========================================================================
@@ -94,24 +111,10 @@ class MFSKAndFlmsgTests
     // JNI bridge smoke test
     // =========================================================================
 
-    /**
-     * Verifies that the native libraries load and [Modem.createCModem] reaches
-     * the JNI layer without crashing. Does not validate MFSK correctness —
-     * only that the bridge is alive end to end.
-     *
-     * If this test fails, the most likely causes are:
-     *   - The `.so` libraries from FldigiAndroid did not get bundled in the AAR.
-     *   - The MFSK-16 mode code in the engine has drifted from `globals.h`.
-     */
     @Test
     fun nativeBridge_createsMfsk16Modem()
     {
-        // MFSK16 mode code: empirically verified at the time of writing.
-        // The engine uses the same value via `MODEM_CODE_MFSK16`. If the value
-        // ever drifts in fldigi's `globals.h`, this test fails first.
-        val MFSK16_MODE_CODE = 22
-
-        val result = Modem.createCModem(MFSK16_MODE_CODE)
+        val result = Modem.createCModem(ToneMode.MFSK16.code())
         assertTrue(
             result.startsWith("Modem created"),
             "Expected success, got: $result"
@@ -129,12 +132,12 @@ class MFSKAndFlmsgTests
     fun acquireForRx_thenRelease_freesEngine()
     {
         runBlocking {
-            val first = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val first = MFSKAndFlmsgEngine.acquireForRx(ToneMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
             val firstHandle = (first as? RxAcquisitionResult.Success)?.handle
                 ?: fail("First acquire failed: $first")
             firstHandle.close()
 
-            val second = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val second = MFSKAndFlmsgEngine.acquireForRx(ToneMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
             val secondHandle = (second as? RxAcquisitionResult.Success)?.handle
                 ?: fail("Second acquire failed after release: $second")
             secondHandle.close()
@@ -150,13 +153,13 @@ class MFSKAndFlmsgTests
     fun acquireForTx_whileRxLive_returnsBusy()
     {
         runBlocking {
-            val rxResult = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val rxResult = MFSKAndFlmsgEngine.acquireForRx(ToneMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
             val rxHandle = (rxResult as? RxAcquisitionResult.Success)?.handle
                 ?: fail("RX acquire failed: $rxResult")
 
             try
             {
-                val txResult = MFSKAndFlmsgEngine.acquireForTx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+                val txResult = MFSKAndFlmsgEngine.acquireForTx(ToneMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
                 assertEquals(
                     TxAcquisitionResult.Busy,
                     txResult,
@@ -171,26 +174,6 @@ class MFSKAndFlmsgTests
     }
 
     /**
-     * Verifies that unsupported modes are rejected with a [Failed] result
-     * containing a non-empty reason. Only MFSK-16 is currently mapped.
-     */
-    @Test
-    fun acquireForRx_unsupportedMode_returnsFailed()
-    {
-        runBlocking {
-            val result = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK32, MFSK16_CENTER_FREQUENCY_HZ)
-
-            val failed = result as? RxAcquisitionResult.Failed
-                ?: fail("Expected Failed for unsupported mode, got: $result")
-
-            assertTrue(
-                failed.reason.isNotBlank(),
-                "Failed reason should be non-empty for caller diagnostics"
-            )
-        }
-    }
-
-    /**
      * Verifies that calling [close] more than once is a silent no-op rather
      * than an error.
      */
@@ -198,7 +181,7 @@ class MFSKAndFlmsgTests
     fun closeAfterClose_isNoOp()
     {
         runBlocking {
-            val result = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val result = MFSKAndFlmsgEngine.acquireForRx(ToneMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
             val handle = (result as? RxAcquisitionResult.Success)?.handle
                 ?: fail("Acquire failed: $result")
 
@@ -216,7 +199,7 @@ class MFSKAndFlmsgTests
     fun pushAudio_afterClose_throwsIllegalStateException()
     {
         runBlocking {
-            val result = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val result = MFSKAndFlmsgEngine.acquireForRx(ToneMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
             val handle = (result as? RxAcquisitionResult.Success)?.handle
                 ?: fail("Acquire failed: $result")
 
@@ -236,7 +219,7 @@ class MFSKAndFlmsgTests
     fun transmit_afterClose_throwsIllegalStateException()
     {
         runBlocking {
-            val result = MFSKAndFlmsgEngine.acquireForTx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val result = MFSKAndFlmsgEngine.acquireForTx(ToneMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
             val handle = (result as? TxAcquisitionResult.Success)?.handle
                 ?: fail("Acquire failed: $result")
 
@@ -339,7 +322,7 @@ class MFSKAndFlmsgTests
     fun abort_silencesToneStream()
     {
         runBlocking {
-            val acquireResult = MFSKAndFlmsgEngine.acquireForTx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val acquireResult = MFSKAndFlmsgEngine.acquireForTx(ToneMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
             val handle = (acquireResult as? TxAcquisitionResult.Success)?.handle
                 ?: fail("Acquire failed: $acquireResult")
 
@@ -426,7 +409,7 @@ class MFSKAndFlmsgTests
     fun pushAudio_silence_doesNotCrash()
     {
         runBlocking {
-            val acquireResult = MFSKAndFlmsgEngine.acquireForRx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+            val acquireResult = MFSKAndFlmsgEngine.acquireForRx(ToneMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
             val handle = (acquireResult as? RxAcquisitionResult.Success)?.handle
                 ?: fail("Acquire failed: $acquireResult")
 
@@ -465,7 +448,7 @@ class MFSKAndFlmsgTests
      * @return All tones emitted during the transmission, in order.
      */
     private suspend fun transmitAndCollectTones(text: String): List<ToneDescriptor> = coroutineScope {
-        val acquireResult = MFSKAndFlmsgEngine.acquireForTx(MFSKMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
+        val acquireResult = MFSKAndFlmsgEngine.acquireForTx(ToneMode.MFSK16, MFSK16_CENTER_FREQUENCY_HZ)
         val handle = (acquireResult as? TxAcquisitionResult.Success)?.handle
             ?: fail("Acquire failed: $acquireResult")
 
@@ -484,7 +467,9 @@ class MFSKAndFlmsgTests
             val collectorJob: Job = launch(Dispatchers.IO) {
                 handle.tones
                     .onSubscription { collectorReady.complete(Unit) }
-                    .collect { collectedTones.add(it) }
+                    .collect {
+                        Timber.d("TEST collector received tone: $it")
+                        collectedTones.add(it) }
             }
 
             // Wait for the collector to be a registered subscriber before

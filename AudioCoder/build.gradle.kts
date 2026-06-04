@@ -63,7 +63,7 @@ android {
 
 dependencies {
 
-    implementation("com.github.OperatorFoundation:FldigiAndroid:0.3.0")
+    implementation("com.github.OperatorFoundation:FldigiAndroid:0.3.2")
 
     implementation(libs.timber)
 
@@ -72,8 +72,8 @@ dependencies {
     implementation(libs.material)
 
     testImplementation(libs.junit)
-    androidTestImplementation("androidx.test:runner:1.6.2")
-    androidTestImplementation("androidx.test:rules:1.6.1")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test:rules:1.7.0")
     androidTestImplementation(libs.junit)
     androidTestImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.3.21")
     androidTestImplementation(libs.androidx.junit)
