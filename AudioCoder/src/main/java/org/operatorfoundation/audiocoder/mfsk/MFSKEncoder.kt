@@ -69,7 +69,7 @@ object MFSKEncoder
      *
      * The returned array contains Gray-encoded tone indices in transmission order,
      * including preamble, start frame, data, end frame, and flush. The caller
-     * converts each index to a centihertz frequency for Eden:
+     * converts each index to a centihertz frequency:
      *   `(baseFrequencyHz + toneIndex * mode.toneSpacingHz) * 100`
      *
      * @param text The text to encode. Characters outside [0, 255] are skipped.
@@ -83,6 +83,33 @@ object MFSKEncoder
             "MFSK IZ8BLY Varicode supports code points [0, 255] only"
         }
         return EncoderState(mode).encode(text)
+    }
+
+    /**
+     * Encodes [text] as a complete fldigi-compatible MFSK frequency sequence
+     * in centihertz.
+     *
+     * Calls [encodeToSymbols] internally and converts each tone index to a
+     * centihertz value:
+     *   `(baseFrequencyHz + toneIndex * mode.toneSpacingHz) * 100`
+     *
+     * [baseFrequencyHz] defaults to 1500.0, matching fldigi's MFSK-16 audio
+     * center convention.
+     *
+     * @param text            The text to encode. Characters outside [0, 255] are skipped.
+     * @param mode            The MFSK modulation mode.
+     * @param baseFrequencyHz Audio base frequency in Hz. Defaults to 1500.0.
+     * @return Tone frequencies in centihertz, in transmission order.
+     */
+    fun encodeToFrequencies(
+        text: String,
+        mode: MFSKMode,
+        baseFrequencyHz: Double = 1500.0
+    ): LongArray
+    {
+        return encodeToSymbols(text, mode).map { toneIndex ->
+            ((baseFrequencyHz + toneIndex * mode.toneSpacingHz) * 100).toLong()
+        }.toLongArray()
     }
 
     // -------------------------------------------------------------------------
