@@ -16,6 +16,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.operatorfoundation.audiocoder.mfsk_andflmsg.MFSKAndFlmsgEncodeResult
+import org.operatorfoundation.audiocoder.mfsk_andflmsg.MFSKAndFlmsgEncoder
 import org.operatorfoundation.audiocoder.mfsk_andflmsg.MFSKAndFlmsgEngine
 import org.operatorfoundation.audiocoder.mfsk_andflmsg.RxAcquisitionResult
 import org.operatorfoundation.audiocoder.mfsk_andflmsg.ToneDescriptor
@@ -80,6 +82,8 @@ class MFSKAndFlmsgTests
                 Timber.plant(Timber.DebugTree())
             }
         }
+
+        private const val TX_FREQUENCY_HZ = 1000.0
     }
     // =========================================================================
     // Constants used across tests
@@ -427,6 +431,95 @@ class MFSKAndFlmsgTests
             {
                 handle.close()
             }
+        }
+    }
+
+    // =========================================================================
+    // MFSKAndFlmsgEncoder tests
+    // =========================================================================
+
+    /**
+     * Verifies that [MFSKAndFlmsgEncoder.encode] returns [MFSKAndFlmsgEncodeResult.Success]
+     * with a non-empty frequency array and a positive symbol duration.
+     */
+    @Test
+    fun encoder_encode_returnsSuccess()
+    {
+        runBlocking {
+            val result = MFSKAndFlmsgEncoder.encode("HELLO", ToneMode.MFSK16)
+
+            val success = result as? MFSKAndFlmsgEncodeResult.Success
+                ?: fail("Expected Success, got: $result")
+
+            assertTrue(
+                success.symbolFrequenciesCHz.isNotEmpty(),
+                "Expected non-empty frequency array"
+            )
+            assertTrue(
+                success.symbolDurationMs > 0,
+                "Expected positive symbol duration, got ${success.symbolDurationMs}ms"
+            )
+        }
+    }
+
+    /**
+     * Verifies that [MFSKAndFlmsgEncoder.encode] returns [MFSKAndFlmsgEncodeResult.Busy]
+     * when the engine is already acquired by another caller.
+     */
+    @Test
+    fun encoder_encode_whileEngineBusy_returnsBusy()
+    {
+        runBlocking {
+            val acquireResult = MFSKAndFlmsgEngine.acquireForTx(
+                ToneMode.MFSK16,
+                TX_FREQUENCY_HZ
+            )
+            val handle = (acquireResult as? TxAcquisitionResult.Success)?.handle
+                ?: fail("Engine acquire failed: $acquireResult")
+
+            try
+            {
+                val result = MFSKAndFlmsgEncoder.encode("HELLO", ToneMode.MFSK16)
+                assertEquals(
+                    MFSKAndFlmsgEncodeResult.Busy,
+                    result,
+                    "Expected Busy while engine is held"
+                )
+            }
+            finally
+            {
+                handle.close()
+            }
+        }
+    }
+
+    /**
+     * Verifies that [MFSKAndFlmsgEncoder.encode] derives [MFSKAndFlmsgEncodeResult.Success.symbolDurationMs]
+     * correctly from the first tone's [ToneDescriptor.durationSamples] and [ToneMode.sampleRate].
+     *
+     * The expected duration is derived independently via a direct engine encode,
+     * so no symlen value is hardcoded in this test.
+     */
+    @Test
+    fun encoder_encode_symbolDurationMatchesToneDescriptor()
+    {
+        runBlocking {
+            // Derive expected duration from a direct engine call
+            val expectedDurationMs = transmitAndCollectTones("HELLO").let { tones ->
+                val firstTone = tones.firstOrNull()
+                    ?: fail("Direct engine encode produced no tones")
+                (firstTone.durationSamples.toDouble() / ToneMode.MFSK16.sampleRate() * 1000).toLong()
+            }
+
+            val result = MFSKAndFlmsgEncoder.encode("HELLO", ToneMode.MFSK16)
+            val success = result as? MFSKAndFlmsgEncodeResult.Success
+                ?: fail("Expected Success, got: $result")
+
+            assertEquals(
+                expectedDurationMs,
+                success.symbolDurationMs,
+                "symbolDurationMs should match durationSamples / sampleRate * 1000"
+            )
         }
     }
 

@@ -63,7 +63,7 @@ android {
 
 dependencies {
 
-    implementation("com.github.OperatorFoundation:FldigiAndroid:0.3.2")
+    implementation("com.github.OperatorFoundation:FldigiAndroid:0.3.3")
 
     implementation(libs.timber)
 
