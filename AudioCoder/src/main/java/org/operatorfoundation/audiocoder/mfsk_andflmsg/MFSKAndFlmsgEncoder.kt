@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.coroutineScope
+import org.operatorfoundation.audiocoder.mfsk.MFSKMode
 import timber.log.Timber
 
 /**
@@ -57,8 +58,14 @@ object MFSKAndFlmsgEncoder
      *         symbol duration, or [MFSKAndFlmsgEncodeResult.Busy] /
      *         [MFSKAndFlmsgEncodeResult.Failed] on error.
      */
-    suspend fun encode(text: String, mode: ToneMode): MFSKAndFlmsgEncodeResult = coroutineScope {
-        val acquireResult = MFSKAndFlmsgEngine.acquireForTx(mode, TX_FREQUENCY_HZ)
+    suspend fun encode(text: String, mode: MFSKMode): MFSKAndFlmsgEncodeResult = coroutineScope {
+
+        val toneMode = toneMode(mode)
+            ?: return@coroutineScope MFSKAndFlmsgEncodeResult.Failed(
+                "No fldigi ToneMode mapping for MFSKMode.${mode.label}"
+            )
+        val acquireResult = MFSKAndFlmsgEngine.acquireForTx(toneMode, TX_FREQUENCY_HZ)
+
         val handle = when (acquireResult)
         {
             is TxAcquisitionResult.Success -> acquireResult.handle
@@ -98,7 +105,7 @@ object MFSKAndFlmsgEncoder
             if (collectedTones.isEmpty())
             {
                 return@coroutineScope MFSKAndFlmsgEncodeResult.Failed(
-                    "No tones emitted for mode ${mode.name}"
+                    "No tones emitted for mode ${mode.label}"
                 )
             }
 
@@ -107,10 +114,10 @@ object MFSKAndFlmsgEncoder
             }.toLongArray()
 
             val symbolDurationMs =
-                (collectedTones.first().durationSamples.toDouble() / mode.sampleRate() * 1000).toLong()
+                (collectedTones.first().durationSamples.toDouble() / toneMode.sampleRate() * 1000).toLong()
 
             Timber.d("MFSKAndFlmsgEncoder: encoded ${collectedTones.size} tones " +
-                    "at ${symbolDurationMs}ms each for mode ${mode.name}")
+                    "at ${symbolDurationMs}ms each for mode ${mode.label}")
 
             MFSKAndFlmsgEncodeResult.Success(symbolFrequenciesCHz, symbolDurationMs)
         }
@@ -118,5 +125,18 @@ object MFSKAndFlmsgEncoder
         {
             handle.close()
         }
+    }
+
+    /**
+     * Maps an AudioCoder [MFSKMode] to the FldigiAndroid [ToneMode] used internally
+     * by the fldigi engine. Returns null for modes not yet supported via this path.
+     */
+    private fun toneMode(mode: MFSKMode): ToneMode? = when (mode)
+    {
+        MFSKMode.MFSK16  -> ToneMode.MFSK16
+        MFSKMode.MFSK32  -> ToneMode.MFSK32
+        MFSKMode.MFSK64  -> ToneMode.MFSK64
+        MFSKMode.MFSK128 -> ToneMode.MFSK128
+        else             -> null
     }
 }
