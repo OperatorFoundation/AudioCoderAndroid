@@ -3,9 +3,11 @@ package org.operatorfoundation.audiocoder.mfsk_andflmsg
 import com.AndFlmsg.ToneMode
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import org.operatorfoundation.audiocoder.mfsk.MFSKMode
 import timber.log.Timber
 
@@ -38,6 +40,14 @@ object MFSKAndFlmsgEncoder
      * own default from modem.cxx. Must be within the valid range [500, 2500] Hz.
      */
     private const val TX_FREQUENCY_HZ = 1000.0
+
+    /**
+     * Time to wait after transmit() returns for the collector coroutine to drain
+     * the SharedFlow buffer. transmit() is synchronous so all tones are in the
+     * buffer on return, but the collector runs on Dispatchers.IO and needs time
+     * to process them before cancelAndJoin is called.
+     */
+    private const val TONE_DRAIN_DELAY_MS = 200L
 
     /**
      * Encodes [text] as an MFSK frequency sequence using the fldigi modem.
@@ -100,7 +110,10 @@ object MFSKAndFlmsgEncoder
                 )
             }
 
-            collectorJob.cancel()
+            // All tones are in the SharedFlow buffer now — transmit() is synchronous.
+            // Wait for the collector coroutine to drain the buffer before cancelling.
+            delay(TONE_DRAIN_DELAY_MS)
+            collectorJob.cancelAndJoin()
 
             if (collectedTones.isEmpty())
             {

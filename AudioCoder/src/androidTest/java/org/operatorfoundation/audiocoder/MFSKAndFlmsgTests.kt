@@ -16,6 +16,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.operatorfoundation.audiocoder.mfsk.MFSKMode
 import org.operatorfoundation.audiocoder.mfsk_andflmsg.MFSKAndFlmsgEncodeResult
 import org.operatorfoundation.audiocoder.mfsk_andflmsg.MFSKAndFlmsgEncoder
 import org.operatorfoundation.audiocoder.mfsk_andflmsg.MFSKAndFlmsgEngine
@@ -446,7 +447,7 @@ class MFSKAndFlmsgTests
     fun encoder_encode_returnsSuccess()
     {
         runBlocking {
-            val result = MFSKAndFlmsgEncoder.encode("HELLO", ToneMode.MFSK16)
+            val result = MFSKAndFlmsgEncoder.encode("HELLO", MFSKMode.MFSK16)
 
             val success = result as? MFSKAndFlmsgEncodeResult.Success
                 ?: fail("Expected Success, got: $result")
@@ -479,7 +480,7 @@ class MFSKAndFlmsgTests
 
             try
             {
-                val result = MFSKAndFlmsgEncoder.encode("HELLO", ToneMode.MFSK16)
+                val result = MFSKAndFlmsgEncoder.encode("HELLO", MFSKMode.MFSK16)
                 assertEquals(
                     MFSKAndFlmsgEncodeResult.Busy,
                     result,
@@ -511,7 +512,7 @@ class MFSKAndFlmsgTests
                 (firstTone.durationSamples.toDouble() / ToneMode.MFSK16.sampleRate() * 1000).toLong()
             }
 
-            val result = MFSKAndFlmsgEncoder.encode("HELLO", ToneMode.MFSK16)
+            val result = MFSKAndFlmsgEncoder.encode("HELLO", MFSKMode.MFSK16)
             val success = result as? MFSKAndFlmsgEncodeResult.Success
                 ?: fail("Expected Success, got: $result")
 
