@@ -2,6 +2,7 @@ package org.operatorfoundation.audiocoder.mfsk
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import timber.log.Timber
 import java.time.Instant
 import kotlin.math.*
 
@@ -130,6 +131,8 @@ class MFSKStation(
     // Per-session mutable state — reset on each session start
     // =========================================================================
 
+    private var chunkCount = 0
+
     // Mixer: current carrier frequency (Hz) and accumulated phase.
     // Starts at the center of the MFSK band. AFC updates currentFrequencyHz over time.
     private var currentFrequencyHz = configuration.baseFrequencyHz + bandwidth / 2.0
@@ -244,6 +247,11 @@ class MFSKStation(
      */
     private suspend fun processChunk(chunk: ShortArray)
     {
+        chunkCount++
+        if (chunkCount % 100 == 0) Timber.d("MFSKStation: processed $chunkCount chunks")
+
+        Timber.d("MFSKStation: processChunk called, ${chunk.size} samples")
+
         for (sample in chunk)
         {
             processSample(sample.toDouble())
@@ -541,6 +549,7 @@ class MFSKStation(
             char == ASCII_STX ->
             {
                 // Start of a new frame — discard any partial previous frame.
+                Timber.d("MFSKStation: STX received — frame opened")
                 frameBuffer.clear()
                 insideFrame = true
             }
@@ -549,6 +558,7 @@ class MFSKStation(
             {
                 // End of frame — emit the accumulated text.
                 val text = frameBuffer.toString()
+                Timber.d("MFSKStation: EOT received — emitting frame, ${text.length} chars")
                 frameBuffer.clear()
                 insideFrame = false
 
@@ -667,6 +677,7 @@ class MFSKStation(
         varicodeDecoder.reset()
         syncFilter.reset()
 
+        chunkCount = 0
         currentFrequencyHz   = configuration.baseFrequencyHz + bandwidth / 2.0
         mixerPhaseAccumulator = 0.0
         sampleCountdown      = samplesPerSymbol
