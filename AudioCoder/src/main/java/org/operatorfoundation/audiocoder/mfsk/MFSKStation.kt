@@ -249,9 +249,7 @@ class MFSKStation(
     {
         chunkCount++
         if (chunkCount % 100 == 0) Timber.d("MFSKStation: processed $chunkCount chunks")
-
-        Timber.d("MFSKStation: processChunk called, ${chunk.size} samples")
-
+        
         for (sample in chunk)
         {
             processSample(sample.toDouble())
