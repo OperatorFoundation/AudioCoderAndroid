@@ -249,7 +249,7 @@ class MFSKStation(
     {
         chunkCount++
         if (chunkCount % 100 == 0) Timber.d("MFSKStation: processed $chunkCount chunks")
-        
+
         for (sample in chunk)
         {
             processSample(sample.toDouble())
@@ -530,6 +530,7 @@ class MFSKStation(
     private suspend fun recvbit(decodedBit: Int)
     {
         val decodedChar = varicodeDecoder.feed(decodedBit) ?: return
+        Timber.d("MFSKStation: recvbit decoded char ${decodedChar.code} ('$decodedChar')")
         handleCharacter(decodedChar)
     }
 
