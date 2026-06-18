@@ -598,26 +598,27 @@ class MFSKStation(
      */
     private fun synchronize()
     {
-        // Only sync when there was a transition (current ≠ prev1, prev1 ≠ prev2).
         if (currentSymbol == prevSymbol1 || prevSymbol1 == prevSymbol2) return
 
         val pipeLength = 2 * samplesPerSymbol
-        var maxMag     = 0.0
-        var peakOffset = 0.0
+        var maxMag = 0.0
+        var syn = -1.0
 
-        for (offset in 0 until pipeLength)
+        // Scan the pipe forward from the current write position, matching fldigi's
+        // synchronize(): i=0 is the current sample, i increasing walks forward in
+        // time (oldest → newest). syn records the forward index of the peak energy
+        // in the prev1symbol tone bin. getPipeEntry(stepsBack) maps fldigi's
+        // pipe[(pipeptr + i) % 2W] to stepsBack = 2W - i (and i=0 → stepsBack=2W,
+        // the current sample, since run() already advanced pipePointer).
+        for (i in 0 until pipeLength)
         {
-            val mag = slidingDFT.getPipeEntryBinMagnitude(offset + 1, prevSymbol1)
-            if (mag > maxMag) { maxMag = mag; peakOffset = offset.toDouble() }
+            val stepsBack = if (i == 0) pipeLength else pipeLength - i
+            val mag = slidingDFT.getPipeEntryBinMagnitude(stepsBack, prevSymbol1)
+            if (mag > maxMag) { maxMag = mag; syn = i.toDouble() }
         }
 
-        // Smooth the sync estimate with an 8-point moving average.
-        val smoothedOffset = syncFilter.run(peakOffset)
-
-        // Adjust the sample countdown proportionally to the offset from center.
-        sampleCountdown += floor(
-            (smoothedOffset - samplesPerSymbol) / toneCount + 0.5
-        ).toInt()
+        val smoothedSyn = syncFilter.run(syn)
+        sampleCountdown += floor((smoothedSyn - samplesPerSymbol) / toneCount + 0.5).toInt()
     }
 
     // =========================================================================
