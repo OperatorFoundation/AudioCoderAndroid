@@ -15,11 +15,14 @@ package org.operatorfoundation.audiocoder.mfsk
  *                        a standard 40-byte Nahoft encrypted message transmits in ~21 seconds.
  *                        The default of 60 000 ms provides ~2.5× margin for timing jitter and
  *                        marginal signal conditions.
+ * @param squelchThreshold Minimum decoded-bit metric required to reach the frame layer.
+ *                         null disables the squelch gate (decode everything).
  */
 data class MFSKConfiguration(
     val mode: MFSKMode,
     val baseFrequencyHz: Double,
     val sampleRate: Int   = MFSKConstants.MFSK_RECOMMENDED_SAMPLE_RATE,
     val amplitude: Double = MFSKConstants.MFSK_DEFAULT_AMPLITUDE,
-    val timeoutMs: Long   = MFSKConstants.MFSK_DEFAULT_TIMEOUT_MS
+    val timeoutMs: Long   = MFSKConstants.MFSK_DEFAULT_TIMEOUT_MS,
+    val squelchThreshold: Double? = MFSKConstants.MFSK_DEFAULT_SQUELCH_THRESHOLD
 )

@@ -61,6 +61,7 @@ class MFSKStation(
     // =========================================================================
 
     private val mode               = configuration.mode
+    private val squelchThreshold   = configuration.squelchThreshold
     private val sampleRate         = configuration.sampleRate
     private val samplesPerSymbol   = mode.samplesPerSymbol(sampleRate)
     private val toneCount          = mode.toneCount
@@ -484,7 +485,7 @@ class MFSKStation(
                 if (decoded == -1) return
                 met1 = decayAverage(met1, metricResult[0].toDouble(), weight = 32)
                 if (met1 < met2) return
-                signalMetric = met1 / 1.5
+                signalMetric = met1 / METRIC_SCALE_DIVISOR
                 decodedBit = decoded
             }
             else
@@ -494,7 +495,7 @@ class MFSKStation(
                 if (decoded == -1) return
                 met2 = decayAverage(met2, metricResult[0].toDouble(), weight = 32)
                 if (met2 < met1) return
-                signalMetric = met2 / 1.5
+                signalMetric = met2 / METRIC_SCALE_DIVISOR
                 decodedBit = decoded
             }
         }
@@ -505,12 +506,23 @@ class MFSKStation(
             val decoded = viterbiDecoder2.decode(symbolPair, metricResult)
             if (decoded == -1) return
             met2         = decayAverage(met2, metricResult[0].toDouble(), weight = 32)
-            signalMetric = met2 / 1.5
+            signalMetric = met2 / METRIC_SCALE_DIVISOR
             decodedBit   = decoded
         }
 
-        // Rescale metric to a useful display range (matches fldigi's post-decode scaling).
-        signalMetric = maxOf(signalMetric - 32.0, 5.0)
+        // Rescale metric into fldigi's display/squelch range.
+        // fldigi: metric -= 32.0; if (metric <= 5.0) metric = 5.0;
+        signalMetric = maxOf(signalMetric - METRIC_DISPLAY_OFFSET, METRIC_FLOOR)
+
+        // DEBUG: read signal-vs-noise metric separation to tune the squelch default. Remove before release.
+        Timber.d("MFSKStation: signalMetric=%.1f".format(signalMetric))
+
+        // Squelch gate — fldigi's `if (metric < sldrSquelchValue) return;` before recvbit().
+        // null threshold disables the gate. The Viterbi decoders ran above, so decoder
+        // state stays warm through noise exactly as in fldigi; this gates only which
+        // decoded bits reach the Varicode/frame layer.
+        val threshold = squelchThreshold
+        if (threshold != null && signalMetric < threshold) return
 
         recvbit(decodedBit)
     }
@@ -775,5 +787,12 @@ class MFSKStation(
          * frequency tracking. Matches fldigi's check: `if (afcmetric < 3.0) return`.
          */
         private const val AFC_ACTIVATION_THRESHOLD = 3.0
+
+        // Metric rescaling constants from fldigi's mfsk::decodesymbol(). They shape the
+        // raw Viterbi path metric into fldigi's display/squelch range:
+        //   metric = met / 1.5;  metric -= 32.0;  if (metric <= 5.0) metric = 5.0;
+        private const val METRIC_SCALE_DIVISOR  = 1.5
+        private const val METRIC_DISPLAY_OFFSET = 32.0
+        private const val METRIC_FLOOR          = 5.0
     }
 }

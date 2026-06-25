@@ -17,4 +17,14 @@ object MFSKConstants
      *  At MFSK-16's ~1.95 bytes/second, a 40-byte payload transmits in ~21 seconds.
      *  60 seconds provides approximately 2.5× margin for timing and signal variation. */
     const val MFSK_DEFAULT_TIMEOUT_MS = 60_000L
+
+    /**
+     * Default squelch threshold (floored at MFSKStation.METRIC_FLOOR, rising toward
+     * ~100 for solid copy). Decoded bits below this do not reach the frame layer.
+     *
+     * Stands in for fldigi's user-adjustable sldrSquelchValue; Pass null to
+     * MFSKConfiguration.squelchThreshold to disable the gate entirely.
+     */
+    // TODO: finalize based on measured signal-vs-noise separation on hardware
+    const val MFSK_DEFAULT_SQUELCH_THRESHOLD = 10.0
 }
