@@ -361,7 +361,8 @@ class MFSKStation(
         staticBurst = (burstCount == toneCount)
 
         afcMetric = if (staticBurst) 0.0
-        else decayAverage(afcMetric, 2.0 * maxMagnitude / averageMagnitude, weight = 20)
+        else AFC_METRIC_DECAY_RETAIN * afcMetric +
+                AFC_METRIC_DECAY_GAIN * (2.0 * maxMagnitude / averageMagnitude)
 
         return winnerIndex
     }
@@ -371,14 +372,14 @@ class MFSKStation(
     // =========================================================================
 
     /**
+     * Includes CWI (Continuous Wave Interference) avoidance: tones that have
+     * dominated for [CWI_MAX_COUNT] consecutive symbol periods are soft-punctured
+     * (replaced by the average magnitude) so they don't corrupt the FE
      * Forms [bitsPerSymbol] soft-decision bytes from the current tone bin magnitudes,
      * de-interleaves them, then feeds each through [decodesymbol].
      *
      * Soft byte value 0 = strong '0', 128 = uncertain, 255 = strong '1'.
-     *
-     * Includes CWI (Continuous Wave Interference) avoidance: tones that have
-     * dominated for [CWI_MAX_COUNT] consecutive symbol periods are soft-punctured
-     * (replaced by the average magnitude) so they don't corrupt the FEC input.
+     *C input.
      *
      * Direct translation of fldigi's mfsk::softdecode().
      */
@@ -510,17 +511,10 @@ class MFSKStation(
             decodedBit   = decoded
         }
 
-        // Rescale metric into fldigi's display/squelch range.
-        // fldigi: metric -= 32.0; if (metric <= 5.0) metric = 5.0;
         signalMetric = maxOf(signalMetric - METRIC_DISPLAY_OFFSET, METRIC_FLOOR)
 
-        // DEBUG: read signal-vs-noise metric separation to tune the squelch default. Remove before release.
         Timber.d("MFSKStation: signalMetric=%.1f".format(signalMetric))
 
-        // Squelch gate — fldigi's `if (metric < sldrSquelchValue) return;` before recvbit().
-        // null threshold disables the gate. The Viterbi decoders ran above, so decoder
-        // state stays warm through noise exactly as in fldigi; this gates only which
-        // decoded bits reach the Varicode/frame layer.
         val threshold = squelchThreshold
         if (threshold != null && signalMetric < threshold) return
 
@@ -669,7 +663,7 @@ class MFSKStation(
 
         if (abs(expectedFreq - measuredFreq) < halfToneSpacing)
         {
-            freqErr           = decayAverage(freqErr, expectedFreq - measuredFreq, weight = 32)
+            freqErr = decayAverage(freqErr, expectedFreq - measuredFreq, weight = FREQ_ERROR_DECAY_WEIGHT)
             currentFrequencyHz -= freqErr
         }
     }
@@ -788,11 +782,19 @@ class MFSKStation(
          */
         private const val AFC_ACTIVATION_THRESHOLD = 3.0
 
-        // Metric rescaling constants from fldigi's mfsk::decodesymbol(). They shape the
-        // raw Viterbi path metric into fldigi's display/squelch range:
-        //   metric = met / 1.5;  metric -= 32.0;  if (metric <= 5.0) metric = 5.0;
+        // Metric rescaling from fldigi mfsk::decodesymbol(): metric = met / 1.5; metric -= 32.0;
+        // if (metric <= 5.0) metric = 5.0;
         private const val METRIC_SCALE_DIVISOR  = 1.5
         private const val METRIC_DISPLAY_OFFSET = 32.0
         private const val METRIC_FLOOR          = 5.0
+
+        // Decay-average time constants (decayavg weight; larger = slower tracking).
+        // fldigi mfsk::decodesymbol() decayavg(met, met, 32) and mfsk::afc() decayavg(freqerr, ..., 32).
+        private const val METRIC_DECAY_WEIGHT     = 32
+        private const val FREQ_ERROR_DECAY_WEIGHT = 32
+
+        // fldigi mfsk::harddecode() AFC metric smoothing: afcmetric = 0.95*afcmetric + 0.05*(2*max/avg).
+        private const val AFC_METRIC_DECAY_RETAIN = 0.95
+        private const val AFC_METRIC_DECAY_GAIN   = 0.05
     }
 }

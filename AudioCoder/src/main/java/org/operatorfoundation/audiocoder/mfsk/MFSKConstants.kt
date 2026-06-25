@@ -18,13 +18,9 @@ object MFSKConstants
      *  60 seconds provides approximately 2.5× margin for timing and signal variation. */
     const val MFSK_DEFAULT_TIMEOUT_MS = 60_000L
 
-    /**
-     * Default squelch threshold (floored at MFSKStation.METRIC_FLOOR, rising toward
-     * ~100 for solid copy). Decoded bits below this do not reach the frame layer.
-     *
-     * Stands in for fldigi's user-adjustable sldrSquelchValue; Pass null to
-     * MFSKConfiguration.squelchThreshold to disable the gate entirely.
-     */
+    /** Default squelch threshold on the rescaled decode metric. Decoded bits whose
+     *  metric falls below this do not reach the frame layer. Pass null to
+     *  MFSKConfiguration.squelchThreshold to disable squelch. */
     // TODO: finalize based on measured signal-vs-noise separation on hardware
     const val MFSK_DEFAULT_SQUELCH_THRESHOLD = 10.0
 }
