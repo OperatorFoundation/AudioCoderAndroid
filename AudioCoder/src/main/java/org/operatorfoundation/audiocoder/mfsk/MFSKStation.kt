@@ -132,8 +132,6 @@ class MFSKStation(
     // Per-session mutable state — reset on each session start
     // =========================================================================
 
-    private var chunkCount = 0
-
     // Mixer: current carrier frequency (Hz) and accumulated phase.
     // Starts at the center of the MFSK band. AFC updates currentFrequencyHz over time.
     private var currentFrequencyHz = configuration.baseFrequencyHz + bandwidth / 2.0
@@ -248,9 +246,6 @@ class MFSKStation(
      */
     private suspend fun processChunk(chunk: ShortArray)
     {
-        chunkCount++
-        if (chunkCount % 100 == 0) Timber.d("MFSKStation: processed $chunkCount chunks")
-
         for (sample in chunk)
         {
             processSample(sample.toDouble())
@@ -513,8 +508,6 @@ class MFSKStation(
 
         signalMetric = maxOf(signalMetric - METRIC_DISPLAY_OFFSET, METRIC_FLOOR)
 
-        Timber.d("MFSKStation: signalMetric=%.1f".format(signalMetric))
-
         val threshold = squelchThreshold
         if (threshold != null && signalMetric < threshold) return
 
@@ -683,7 +676,6 @@ class MFSKStation(
         varicodeDecoder.reset()
         syncFilter.reset()
 
-        chunkCount = 0
         currentFrequencyHz   = configuration.baseFrequencyHz + bandwidth / 2.0
         mixerPhaseAccumulator = 0.0
         sampleCountdown      = samplesPerSymbol

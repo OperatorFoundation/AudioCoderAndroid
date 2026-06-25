@@ -22,5 +22,5 @@ object MFSKConstants
      *  metric falls below this do not reach the frame layer. Pass null to
      *  MFSKConfiguration.squelchThreshold to disable squelch. */
     // TODO: finalize based on measured signal-vs-noise separation on hardware
-    const val MFSK_DEFAULT_SQUELCH_THRESHOLD = 10.0
+    const val MFSK_DEFAULT_SQUELCH_THRESHOLD = 40.0
 }
